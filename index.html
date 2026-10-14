@@ -717,82 +717,38 @@
       </div>
     </section>
 
-    <!-- ============ PAGE COMPTES AGENTS ============ -->
+    <!-- ============ PAGE AGENTS ============ -->
     <section id="page-agents" class="page">
-      <h2 class="h5 text-primary mb-3"><i class="bi bi-people"></i> Comptes agents</h2>
+      <h2 class="h5 text-primary mb-3"><i class="bi bi-people"></i> Agents apporteurs</h2>
 
-      <div class="row g-2 mb-3">
-        <div class="col-6 col-md-4">
-          <div class="kpi-card" style="background:#0d6e5c;">
-            <div class="label">Louis — Reste</div>
-            <div class="value" id="kpi-louis">—</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-4">
-          <div class="kpi-card" style="background:#0d6e5c;">
-            <div class="label">Dorcas — Reste</div>
-            <div class="value" id="kpi-dorcas">—</div>
+      <div class="alert alert-info small">
+        <i class="bi bi-info-circle"></i> Les agents listés ici sont les personnes qui apportent des fonds pour approvisionner les caisses des agences.
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white fw-bold small"><i class="bi bi-person-plus"></i> Nouvel agent</div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-12 col-md-6">
+              <label class="form-label small fw-bold mb-1">Nom de l'agent *</label>
+              <input type="text" id="agent-nom" class="form-control form-control-sm" placeholder="Ex : Louis">
+            </div>
+            <div class="col-12 col-md-6 d-flex align-items-end">
+              <button id="agent-ajouter" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-plus-circle"></i> Ajouter l'agent
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="card shadow-sm mb-3">
-        <div class="card-header bg-white fw-bold small"><i class="bi bi-person-badge"></i> Mr Louis</div>
-        <div class="card-body">
-          <div class="row g-2 mb-2">
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Date</label>
-              <input type="date" id="louis-date" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Libellé</label>
-              <input type="text" id="louis-libelle" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Entrée ($)</label>
-              <input type="number" step="0.01" id="louis-entree" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Sortie ($)</label>
-              <input type="number" step="0.01" id="louis-sortie" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3 d-flex align-items-end">
-              <button id="louis-ajouter" class="btn btn-primary btn-sm w-100">
-                <i class="bi bi-plus-circle"></i> Ajouter
-              </button>
-            </div>
-          </div>
-          <div id="louis-liste" class="table-responsive"></div>
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold small"><i class="bi bi-list-ul"></i> Liste des agents</span>
+          <span id="agent-count" class="badge bg-secondary">0</span>
         </div>
-      </div>
-
-      <div class="card shadow-sm mb-3">
-        <div class="card-header bg-white fw-bold small"><i class="bi bi-person-badge"></i> Mme Dorcas</div>
-        <div class="card-body">
-          <div class="row g-2 mb-2">
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Date</label>
-              <input type="date" id="dorcas-date" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Libellé</label>
-              <input type="text" id="dorcas-libelle" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Fonds propres ($)</label>
-              <input type="number" step="0.01" id="dorcas-fonds" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Remboursement ($)</label>
-              <input type="number" step="0.01" id="dorcas-remb" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3 d-flex align-items-end">
-              <button id="dorcas-ajouter" class="btn btn-primary btn-sm w-100">
-                <i class="bi bi-plus-circle"></i> Ajouter
-              </button>
-            </div>
-          </div>
-          <div id="dorcas-liste" class="table-responsive"></div>
+        <div class="card-body p-0">
+          <div id="agent-liste" class="table-responsive"></div>
         </div>
       </div>
     </section>
@@ -1252,7 +1208,7 @@
 
     if (nom === 'tbord')      afficherTbord();
     if (nom === 'compta')     afficherTbord();
-    if (nom === 'appro')      { afficherAppro(); preremplirTaux('appro-taux'); }
+    if (nom === 'appro')      afficherAppro();
     if (nom === 'kin-ctn')    { afficherKinCtn(); preremplirTaux('kc-taux'); }
     if (nom === 'ctn-kin')    { afficherCtnKin(); preremplirTaux('ck-taux'); }
     if (nom === 'codes')      afficherCodes();
@@ -1785,83 +1741,13 @@
   }
 
   /* ========== PAGE AGENTS ========== */
-  async function ajouterLouis() {
-    const item = {
-      mois: moisActif,
-      date: val('louis-date'),
-      libelle: val('louis-libelle'),
-      entree: val('louis-entree') || 0,
-      sortie: val('louis-sortie') || 0
-    };
-    if (!item.date) { alert('La date est obligatoire.'); return; }
-    await dbAdd('louis', item);
-    resetForm(['louis-date', 'louis-libelle', 'louis-entree', 'louis-sortie']);
-    log('➕ Louis : entrée ' + fmt(item.entree) + ' $');
-    await afficherAgents();
-  }
+  
 
-  async function afficherLouis() {
-    const items = (await dbGetAll('louis')).filter(i => i.mois === moisActif);
-    const c = document.getElementById('louis-liste');
-    if (!c) return;
-    if (items.length === 0) { c.innerHTML = '<div class="text-secondary small">Aucune transaction.</div>'; document.getElementById('kpi-louis').textContent = '—'; return; }
+  
 
-    let html = '<table class="table table-sm table-tl mb-0"><thead><tr><th>Date</th><th>Libellé</th><th>Entrée</th><th>Sortie</th><th></th></tr></thead><tbody>';
-    let totE = 0, totS = 0;
-    items.forEach(i => {
-      totE += i.entree || 0;
-      totS += i.sortie || 0;
-      html += `<tr>
-        <td>${i.date || ''}</td>
-        <td style="text-align:left;">${i.libelle || ''}</td>
-        <td>${fmt(i.entree)}</td>
-        <td>${fmt(i.sortie)}</td>
-        <td><button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('louis',${i.id})"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('louis',${i.id})"><i class="bi bi-trash"></i></button></td>
-      </tr>`;
-    });
-    html += '</tbody></table>';
-    c.innerHTML = html;
-    document.getElementById('kpi-louis').textContent = fmt(totE - totS) + ' $';
-  }
+  
 
-  async function ajouterDorcas() {
-    const item = {
-      mois: moisActif,
-      date: val('dorcas-date'),
-      libelle: val('dorcas-libelle'),
-      fonds: val('dorcas-fonds') || 0,
-      remb: val('dorcas-remb') || 0
-    };
-    if (!item.date) { alert('La date est obligatoire.'); return; }
-    await dbAdd('dorcas', item);
-    resetForm(['dorcas-date', 'dorcas-libelle', 'dorcas-fonds', 'dorcas-remb']);
-    log('➕ Dorcas : fonds ' + fmt(item.fonds) + ' $');
-    await afficherAgents();
-  }
-
-  async function afficherDorcas() {
-    const items = (await dbGetAll('dorcas')).filter(i => i.mois === moisActif);
-    const c = document.getElementById('dorcas-liste');
-    if (!c) return;
-    if (items.length === 0) { c.innerHTML = '<div class="text-secondary small">Aucune transaction.</div>'; document.getElementById('kpi-dorcas').textContent = '—'; return; }
-
-    let html = '<table class="table table-sm table-tl mb-0"><thead><tr><th>Date</th><th>Libellé</th><th>Fonds</th><th>Remb.</th><th></th></tr></thead><tbody>';
-    let totF = 0, totR = 0;
-    items.forEach(i => {
-      totF += i.fonds || 0;
-      totR += i.remb || 0;
-      html += `<tr>
-        <td>${i.date || ''}</td>
-        <td style="text-align:left;">${i.libelle || ''}</td>
-        <td>${fmt(i.fonds)}</td>
-        <td>${fmt(i.remb)}</td>
-        <td><button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('dorcas',${i.id})"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('dorcas',${i.id})"><i class="bi bi-trash"></i></button></td>
-      </tr>`;
-    });
-    html += '</tbody></table>';
-    c.innerHTML = html;
-    document.getElementById('kpi-dorcas').textContent = fmt(totF - totR) + ' $';
-  }
+  
 
   async function afficherAgents() {
     await afficherLouis();
@@ -2024,8 +1910,7 @@
     const ctnKin = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
     const codes = (await dbGetAll('codes')).filter(i => i.mois === moisActif);
     const dep = (await dbGetAll('depenses')).filter(i => i.mois === moisActif);
-    const louis = (await dbGetAll('louis')).filter(i => i.mois === moisActif);
-    const dorcas = (await dbGetAll('dorcas')).filter(i => i.mois === moisActif);
+
 
     // Totaux
     // Approvisionnements ventilés par agence (v3)
@@ -2048,14 +1933,13 @@
     const totDepKIN = dep.filter(i => i.ville === 'KIN').reduce((s, i) => s + (i.montant || 0), 0);
     const totDepAutre = dep.filter(i => i.ville === 'AUTRE').reduce((s, i) => s + (i.montant || 0), 0);
 
-    const totLouisReste = louis.reduce((s, i) => s + (i.entree || 0) - (i.sortie || 0), 0);
-    const totDorcasReste = dorcas.reduce((s, i) => s + (i.fonds || 0) - (i.remb || 0), 0);
+
 
     const soldeInitialCTN = (await getConfig('solde_initial_ctn_' + moisActif)) || 0;
     const soldeInitialKIN = (await getConfig('solde_initial_kin_' + moisActif)) || 0;
 
     // Calcul CTN
-    const entreesCTN = soldeInitialCTN + totApproCTN + totApproLegacy + totCtnKinRecu + totLouisReste + totDorcasReste;
+    const entreesCTN = soldeInitialCTN + totApproCTN + totApproLegacy + totCtnKinRecu;
     const sortiesCTN = totKinCtnServi + totDepCTN + totDepAutre;
     const soldeCTN = entreesCTN - sortiesCTN;
 
@@ -2071,10 +1955,10 @@
       totCtnKinRecu, totCtnKinComm,
       totCodesReste, totCodesServi,
       totDepCTN, totDepKIN, totDepAutre,
-      totLouisReste, totDorcasReste,
+
       entreesCTN, sortiesCTN, entreesKIN, sortiesKIN,
       soldeInitialCTN, soldeInitialKIN,
-      hasData: (appro.length + kinCtn.length + ctnKin.length + codes.length + dep.length + louis.length + dorcas.length) > 0
+      hasData: (appro.length + kinCtn.length + ctnKin.length + codes.length + dep.length) > 0
     };
   }
 
@@ -2095,7 +1979,7 @@
         <tbody>
           <tr><td style="text-align:left;">Solde initial</td><td>${fmt(s.soldeInitialCTN)}</td><td>${fmt(s.soldeInitialKIN)}</td></tr>
           <tr><td style="text-align:left;">Approvisionnement</td><td>${fmt(s.totApproCTN)}</td><td>${fmt(s.totApproKIN)}</td></tr>
-          <tr><td style="text-align:left;">Louis / Dorcas</td><td>${fmt(s.totLouisReste + s.totDorcasReste)}</td><td>—</td></tr>
+          
           <tr><td style="text-align:left;">Entrées transferts</td><td>${fmt(s.totCtnKinRecu)}</td><td>${fmt(s.totKinCtnRecu)}</td></tr>
           <tr><td style="text-align:left;">Codes servis</td><td>${fmt(s.totKinCtnServi)}</td><td>${fmt(s.totCtnKinRecu)}</td></tr>
           <tr><td style="text-align:left;">Codes en attente</td><td>${fmt(s.totCodesReste)}</td><td>—</td></tr>
@@ -2654,8 +2538,6 @@
 
     try {
       document.getElementById('dep-ajouter').addEventListener('click', ajouterDepense);
-      document.getElementById('louis-ajouter').addEventListener('click', ajouterLouis);
-      document.getElementById('dorcas-ajouter').addEventListener('click', ajouterDorcas);
       diagStep('10. Boutons Agents/Dépenses attachés ✅');
     } catch (e) {
       diagStep('❌ ERREUR Dépenses/Agents : ' + e.message, true);
