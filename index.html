@@ -1750,8 +1750,84 @@
   
 
   async function afficherAgents() {
-    await afficherLouis();
-    await afficherDorcas();
+    const items = await dbGetAll('agents');
+    const c = document.getElementById('agent-liste');
+    if (!c) return;
+
+    const countEl = document.getElementById('agent-count');
+    if (countEl) countEl.textContent = items.filter(a => a.actif !== false).length;
+
+    if (items.length === 0) {
+      c.innerHTML = '<div class="p-3 text-secondary small">Aucun agent enregistré.</div>';
+      return;
+    }
+
+    let html = '<table class="table table-sm table-tl mb-0"><thead><tr>';
+    html += '<th>Nom</th><th>Statut</th><th>Actions</th>';
+    html += '</tr></thead><tbody>';
+
+    items.forEach(a => {
+      const actif = a.actif !== false;
+      html += `<tr>
+        <td style="text-align:left;"><strong>${a.nom || '—'}</strong></td>
+        <td>${actif ? '<span class="badge bg-success">Actif</span>' : '<span class="badge bg-secondary">Inactif</span>'}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary me-1" onclick="editerAgent(${a.id})"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-sm btn-outline-${actif ? 'warning' : 'success'} me-1" onclick="basculerAgent(${a.id})"><i class="bi bi-${actif ? 'pause' : 'play'}"></i></button>
+          <button class="btn btn-sm btn-outline-danger" onclick="supprimerAgent(${a.id})"><i class="bi bi-trash"></i></button>
+        </td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    c.innerHTML = html;
+  }
+
+  async function ajouterAgent() {
+    const nom = (val('agent-nom') || '').trim();
+    if (!nom) { alert('Le nom est obligatoire.'); return; }
+    const existants = await dbGetAll('agents');
+    if (existants.some(a => (a.nom || '').toLowerCase() === nom.toLowerCase())) {
+      alert('Un agent porte déjà ce nom.');
+      return;
+    }
+    await dbAdd('agents', { nom: nom, actif: true });
+    document.getElementById('agent-nom').value = '';
+    log('➕ Agent ajouté : ' + nom);
+    await afficherAgents();
+    await chargerSelectAgents();
+  }
+
+  async function basculerAgent(id) {
+    const item = await dbGet('agents', id);
+    if (!item) return;
+    item.actif = item.actif === false ? true : false;
+    await dbUpdate('agents', item);
+    log('🔄 Agent ' + item.nom + ' : ' + (item.actif ? 'actif' : 'inactif'));
+    await afficherAgents();
+    await chargerSelectAgents();
+  }
+
+  async function editerAgent(id) {
+    const item = await dbGet('agents', id);
+    if (!item) return;
+    const nouveau = prompt('Nouveau nom :', item.nom);
+    if (nouveau === null) return;
+    const nom = nouveau.trim();
+    if (!nom) { alert('Le nom ne peut pas être vide.'); return; }
+    item.nom = nom;
+    await dbUpdate('agents', item);
+    log('✏️ Agent modifié : ' + nom);
+    await afficherAgents();
+    await chargerSelectAgents();
+  }
+
+  async function supprimerAgent(id) {
+    if (!confirm('Supprimer cet agent ? Les appros déjà enregistrées garderont son nom.')) return;
+    await dbDelete('agents', id);
+    log('🗑️ Agent supprimé');
+    await afficherAgents();
+    await chargerSelectAgents();
   }
 
   /* ========== ÉDITION GÉNÉRIQUE ========== */
@@ -1759,12 +1835,11 @@
   const CHAMPS_EDIT = {
     appro: [
       { key: 'date', label: 'Date', type: 'date' },
+      { key: 'agence', label: 'Agence (CTN/KIN)', type: 'text' },
+      { key: 'montant', label: 'Montant ($)', type: 'number' },
+      { key: 'agentNom', label: 'Agent', type: 'text' },
       { key: 'libelle', label: 'Libellé', type: 'text' },
-      { key: 'fondsKin', label: 'Fonds Kin ($)', type: 'number' },
-      { key: 'fondsDivine', label: 'Transfert Divine ($)', type: 'number' },
-      { key: 'change', label: 'Change ($)', type: 'number' },
-      { key: 'taux', label: 'Taux', type: 'number' },
-      { key: 'agent', label: 'Agent', type: 'text' }
+      { key: 'observation', label: 'Observation', type: 'text' }
     ],
     kin_ctn: [
       { key: 'date', label: 'Date', type: 'date' },
@@ -2507,6 +2582,8 @@
     try {
       diagStep('7. Attachement des boutons...');
       document.getElementById('appro-ajouter').addEventListener('click', ajouterAppro);
+    if (document.getElementById('agent-ajouter'))
+      document.getElementById('agent-ajouter').addEventListener('click', ajouterAgent);
       diagStep('  ✅ appro-ajouter');
       document.getElementById('kc-ajouter').addEventListener('click', ajouterKinCtn);
       diagStep('  ✅ kc-ajouter');
