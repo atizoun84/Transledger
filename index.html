@@ -210,6 +210,15 @@
   #modalListeEnvois .table td, #modalListeEnvois .table th { vertical-align: middle; font-size: .85rem; }
   #modalListeEnvois .modal-body { max-height: 65vh; overflow-y: auto; }
 </style>
+
+<style id="compta-details-style">
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::marker { display: none; }
+  details[open] > summary .bi-chevron-down { transform: rotate(180deg); }
+  details > summary .bi-chevron-down { transition: transform .2s ease; display: inline-block; }
+  #compta-table td.text-danger { color:#dc3545 !important; }
+  #compta-table td.text-success { color:#198754 !important; }
+</style>
 </head>
 <body>
 
@@ -317,23 +326,114 @@
     <section id="page-compta" class="page">
       <h2 class="h5 text-primary mb-3"><i class="bi bi-calculator"></i> Comptabilité &amp; Analyse</h2>
 
-<div class="card shadow-sm mb-3">
-        <div class="card-header bg-white fw-bold small">
-          <i class="bi bi-clipboard-data"></i> SITUATION DES OPÉRATIONS
+      <!-- ========== SYNTHÈSE COMPARATIVE ========== -->
+      <div class="card shadow-sm mb-3">
+        <div class="card-header border-0" style="background:linear-gradient(135deg,#0d6e5c 0%,#0a5244 100%); color:#fff;">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-bar-chart-fill"></i> Synthèse comparative</span>
+            <small id="compta-mois-label" style="opacity:.85;">—</small>
+          </div>
         </div>
         <div class="card-body p-0">
-          <div id="tbord-situation" class="table-responsive"></div>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle" id="compta-table">
+              <thead class="table-light">
+                <tr>
+                  <th style="min-width:160px;">Métrique</th>
+                  <th class="text-end" style="min-width:110px;">🇧🇯 Cotonou</th>
+                  <th class="text-end" style="min-width:110px;">🇨🇩 Kinshasa</th>
+                  <th class="text-end d-none d-md-table-cell" style="min-width:100px;">Écart</th>
+                </tr>
+              </thead>
+              <tbody id="compta-tbody">
+                <tr><td colspan="4" class="text-center text-secondary small py-4">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <div class="card shadow-sm">
-        <div class="card-header bg-white fw-bold small">
-          <i class="bi bi-calculator"></i> SOLDE FINAL
+      <!-- ========== DÉTAIL COTONOU ========== -->
+      <details class="card shadow-sm mb-2" style="overflow:hidden;">
+        <summary class="card-header bg-white fw-bold small" style="cursor:pointer; list-style:none;">
+          <span class="d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-geo-alt-fill text-primary"></i> 🇧🇯 Détail Cotonou</span>
+            <i class="bi bi-chevron-down"></i>
+          </span>
+        </summary>
+        <div class="card-body pt-0">
+          <div class="row g-2 mb-2">
+            <div class="col-6 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-secondary">Envois</div>
+                <div class="fw-bold" id="compta-ctn-envois">—</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-secondary">Retraits</div>
+                <div class="fw-bold" id="compta-ctn-retraits">—</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-secondary">À servir</div>
+                <div class="fw-bold text-warning" id="compta-ctn-reste">—</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-secondary">Solde caisse</div>
+                <div class="fw-bold" id="compta-ctn-solde">—</div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-outline-primary btn-sm w-100" onclick="changerPage('ctn-kin')">
+            <i class="bi bi-box-arrow-up-right"></i> Ouvrir la page complète Cotonou
+          </button>
         </div>
-        <div class="card-body p-0">
-          <div id="tbord-solde" class="table-responsive"></div>
+      </details>
+
+      <!-- ========== DÉTAIL KINSHASA ========== -->
+      <details class="card shadow-sm mb-2" style="overflow:hidden;">
+        <summary class="card-header bg-white fw-bold small" style="cursor:pointer; list-style:none;">
+          <span class="d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-geo-alt-fill text-success"></i> 🇨🇩 Détail Kinshasa</span>
+            <i class="bi bi-chevron-down"></i>
+          </span>
+        </summary>
+        <div class="card-body pt-0">
+          <div class="row g-2 mb-2">
+            <div class="col-6 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-secondary">Envois</div>
+                <div class="fw-bold" id="compta-kin-envois">—</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-secondary">Retraits</div>
+                <div class="fw-bold" id="compta-kin-retraits">—</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-secondary">À servir</div>
+                <div class="fw-bold text-warning" id="compta-kin-reste">—</div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-secondary">Solde caisse</div>
+                <div class="fw-bold" id="compta-kin-solde">—</div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-outline-success btn-sm w-100" onclick="changerPage('kin-ctn')">
+            <i class="bi bi-box-arrow-up-right"></i> Ouvrir la page complète Kinshasa
+          </button>
         </div>
-      </div>
+      </details>
     </section>
 
     <!-- ============ PAGE APPROVISIONNEMENT ============ -->
@@ -1231,7 +1331,7 @@
     }
 
     if (nom === 'tbord')      afficherTbord();
-    if (nom === 'compta')     afficherTbord();
+    if (nom === 'compta')     afficherComptabilite();
     if (nom === 'appro')      afficherAppro();
     if (nom === 'kin-ctn')    afficherKinCtn();
     if (nom === 'ctn-kin')    afficherCtnKin();
@@ -2581,6 +2681,7 @@
     await afficherKinCtn();
     await afficherCtnKin();
     await afficherCodes();
+    await afficherComptabilite();
     await afficherCompensations();
     await afficherDepenses();
     await afficherAgents();
@@ -2805,6 +2906,97 @@
     await afficherKinCtn();
     await afficherCtnKin();
     await majCompteurs();
+  }
+
+
+  /* ========== PAGE COMPTABILITÉ — STATS PAR AGENCE ========== */
+  async function calculerStatsAgence(agence) {
+    const kinCtn = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
+    const ctnKin = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
+    const comps  = (await dbGetAll('compensations')).filter(c => c.mois === moisActif);
+    const dep    = (await dbGetAll('depenses')).filter(i => i.mois === moisActif);
+
+    // Envois ÉMIS par cette agence
+    const envois = agence === 'CTN' ? ctnKin : kinCtn;
+    // Transferts REÇUS par cette agence
+    const recus  = agence === 'CTN' ? kinCtn : ctnKin;
+
+    const totEnvois  = envois.reduce((s, i) => s + (i.recu || 0), 0);
+    const totServi   = recus.reduce((s, i) => s + (i.servi || 0), 0);
+    const totReste   = recus.reduce((s, i) => s + (i.reste || 0), 0);
+    const nbCodes    = recus.filter(i => (i.reste || 0) > 0).length;
+
+    const compRecues   = comps.filter(c => c.dest === agence).reduce((s, c) => s + (c.montant || 0), 0);
+    const compEnvoyees = comps.filter(c => c.source === agence).reduce((s, c) => s + (c.montant || 0), 0);
+
+    const depVille = agence === 'CTN'
+      ? dep.filter(i => i.ville === 'CTN' || i.ville === 'AUTRE').reduce((s, i) => s + (i.montant || 0), 0)
+      : dep.filter(i => i.ville === 'KIN').reduce((s, i) => s + (i.montant || 0), 0);
+
+    const solde = await calculerSoldeCaisse(agence);
+
+    return { totEnvois, totServi, totReste, nbCodes, compRecues, compEnvoyees, depVille, solde };
+  }
+
+  async function afficherComptabilite() {
+    const ctn = await calculerStatsAgence('CTN');
+    const kin = await calculerStatsAgence('KIN');
+
+    // Label du mois
+    const moisEl = document.getElementById('compta-mois-label');
+    if (moisEl && moisActif) {
+      const [yyyy, mm] = moisActif.split('-');
+      const nom = new Date(yyyy, parseInt(mm) - 1, 1)
+        .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+      moisEl.textContent = nom.charAt(0).toUpperCase() + nom.slice(1);
+    }
+
+    // Tableau synthèse
+    const tbody = document.getElementById('compta-tbody');
+    if (!tbody) return;
+
+    const lignes = [
+      { label: '💰 Solde en caisse',  c: ctn.solde,          k: kin.solde,          ecart: true },
+      { label: '📤 Envois émis',       c: ctn.totEnvois,      k: kin.totEnvois,      ecart: true },
+      { label: '📥 Retraits servis',   c: ctn.totServi,       k: kin.totServi,       ecart: true },
+      { label: '⏳ À servir',          c: ctn.totReste,       k: kin.totReste,       ecart: true },
+      { label: '🔑 Codes en attente',  c: ctn.nbCodes,        k: kin.nbCodes,        ecart: false },
+      { label: '🔄 Comp. reçues',      c: ctn.compRecues,     k: kin.compRecues,     ecart: true },
+      { label: '↗️ Comp. envoyées',    c: ctn.compEnvoyees,   k: kin.compEnvoyees,   ecart: true },
+      { label: '💸 Dépenses',          c: ctn.depVille,       k: kin.depVille,       ecart: true }
+    ];
+
+    let out = '';
+    lignes.forEach(l => {
+      const fmtC = l.ecart ? fmt(l.c) + ' $' : String(l.c);
+      const fmtK = l.ecart ? fmt(l.k) + ' $' : String(l.k);
+      let ecartCell = '—';
+      if (l.ecart) {
+        const d = l.c - l.k;
+        const cls = d > 0 ? 'text-success' : (d < 0 ? 'text-danger' : 'text-secondary');
+        ecartCell = `<span class="${cls}">${d >= 0 ? '+' : ''}${fmt(d)} $</span>`;
+      }
+      out += `<tr>
+        <td class="small">${l.label}</td>
+        <td class="text-end fw-bold">${fmtC}</td>
+        <td class="text-end fw-bold">${fmtK}</td>
+        <td class="text-end d-none d-md-table-cell small">${ecartCell}</td>
+      </tr>`;
+    });
+    tbody.innerHTML = out;
+
+    // Détails CTN
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('compta-ctn-envois',    fmt(ctn.totEnvois) + ' $');
+    set('compta-ctn-retraits',  fmt(ctn.totServi) + ' $');
+    set('compta-ctn-reste',     fmt(ctn.totReste) + ' $');
+    set('compta-ctn-solde',     fmt(ctn.solde) + ' $');
+
+    // Détails KIN
+    set('compta-kin-envois',    fmt(kin.totEnvois) + ' $');
+    set('compta-kin-retraits',  fmt(kin.totServi) + ' $');
+    set('compta-kin-reste',     fmt(kin.totReste) + ' $');
+    set('compta-kin-solde',     fmt(kin.solde) + ' $');
   }
 
   /* ========== SÉCURITÉ ÉCOUTEURS ========== */
