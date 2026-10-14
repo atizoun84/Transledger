@@ -1,0 +1,2643 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d6e5c">
+  <meta name="description" content="TransLedger - Transferts KIN ↔ CTN par Atizoun">
+  <title>TransLedger</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+  <style>
+    :root {
+      --tl-primary: #0d6e5c;
+      --tl-primary-dark: #084c40;
+      --tl-bg: #f6f6f6;
+    }
+    body {
+      background: var(--tl-bg);
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .app-header { background: var(--tl-primary); }
+    .header-flag {
+      height: 28px;
+      width: auto;
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.4), 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .page { display: none; }
+    .page.active { display: block; animation: fadeIn 0.25s ease-in; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .card-tl { border-left: 4px solid var(--tl-primary) !important; }
+    .card-tl .form-control { text-align: center; }
+    .card-tl .form-label {
+      font-size: 0.7rem; color: #6c757d; margin-bottom: 2px; font-weight: 600;
+    }
+    .table-tl { font-size: 0.75rem; }
+    .table-tl th {
+      background: var(--tl-primary) !important;
+      color: white !important;
+      white-space: nowrap;
+      font-size: 0.7rem;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .table-tl td {
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+      padding: 6px 4px;
+    }
+    .table-tl .col-nom {
+      text-align: left;
+      font-weight: 600;
+      color: var(--tl-primary);
+      background: white;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+    }
+    .statut-ok { color: #198754; font-weight: 700; }
+    .statut-ko { color: #dc3545; font-weight: 700; }
+    .app-footer { margin-top: auto; }
+    .menu-link.active { background: var(--tl-primary); color: white !important; }
+    .kpi-card {
+      border-radius: 10px;
+      padding: 12px;
+      color: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .kpi-card .label { font-size: 0.7rem; opacity: 0.9; text-transform: uppercase; }
+    .kpi-card .value { font-size: 1.3rem; font-weight: 700; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; }
+    }
+
+    /* ============ FOOTER MODERNE ============ */
+    .app-footer-modern {
+      background: linear-gradient(135deg, #0d6e5c 0%, #084c40 100%);
+      color: white;
+      margin-top: auto;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      font-size: 0.7rem;
+      padding: 6px 12px;
+    }
+    .app-footer-modern .footer-l1 {
+      font-size: 0.72rem;
+      opacity: 0.95;
+      line-height: 1.4;
+    }
+    .app-footer-modern .footer-l2 {
+      font-size: 0.65rem;
+      opacity: 0.8;
+      line-height: 1.4;
+      border-top: 1px solid rgba(255,255,255,0.15);
+      padding-top: 3px;
+      margin-top: 3px;
+    }
+    .app-footer-modern a {
+      color: rgba(255,255,255,0.9);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .app-footer-modern a:hover {
+      color: #FFD43A;
+    }
+    .app-footer-modern .sep {
+      opacity: 0.4;
+      margin: 0 4px;
+    }
+
+    /* ============ ENCADRÉ TAUX DU JOUR (header) ============ */
+    .taux-box {
+      background: linear-gradient(135deg, #FFD43A 0%, #FFA500 100%);
+      color: #262824;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.2);
+      animation: tauxPulse 2s ease-in-out infinite;
+      white-space: nowrap;
+    }
+    .taux-box .taux-value {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #0d6e5c;
+    }
+    .taux-box i {
+      animation: tauxRotate 4s linear infinite;
+    }
+    @keyframes tauxPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.2); }
+      50%      { transform: scale(1.04); box-shadow: 0 0 0 3px rgba(255,212,58,0.5), 0 4px 12px rgba(0,0,0,0.3); }
+    }
+    @keyframes tauxRotate {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* ============ CODE SECRET (modal succès) ============ */
+    .code-secret-display {
+      font-family: 'Courier New', monospace;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 0.5rem;
+      color: #0d6e5c;
+      background: #f0f9f6;
+      border: 2px dashed #0d6e5c;
+      border-radius: 12px;
+      padding: 15px 20px;
+      display: inline-block;
+      min-width: 220px;
+      animation: codeReveal 0.5s ease-out;
+    }
+    @keyframes codeReveal {
+      from { transform: scale(0.8); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .copie-success {
+      animation: copieFlash 0.6s ease-out;
+    }
+    @keyframes copieFlash {
+      0%   { background-color: #d1e7dd; }
+      100% { background-color: transparent; }
+    }
+
+    /* ============ BADGE COMPTEUR AGENCE ============ */
+    .counter-badge {
+      display: inline-block;
+      background: #dc3545;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      margin-left: 6px;
+      min-width: 22px;
+      text-align: center;
+      animation: counterPulse 1.5s ease-in-out infinite;
+    }
+    .counter-badge.zero {
+      background: #6c757d;
+      animation: none;
+    }
+    @keyframes counterPulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.12); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- OVERLAY ERREURS (temporaire) -->
+  <div id="error-overlay" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc3545;color:white;padding:8px;font-size:11px;font-family:monospace;max-height:40vh;overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <strong>⚠️ Erreur JS détectée</strong>
+      <button onclick="document.getElementById('error-overlay').style.display='none'" style="background:white;color:#dc3545;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-weight:bold;">✕</button>
+    </div>
+    <div id="error-content"></div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="app-header text-white shadow-sm">
+    <div class="container-fluid" style="max-width:900px;">
+      <div class="d-flex align-items-center justify-content-between py-2">
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-sm text-white border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuBurger">
+            <i class="bi bi-list" style="font-size:1.4rem;"></i>
+          </button>
+          <img src="./benin.png" alt="Bénin" class="header-flag">
+        </div>
+        <div class="text-center flex-grow-1">
+          <div class="h5 mb-0"><i class="bi bi-cash-coin"></i> TransLedger</div>
+          <div class="small opacity-75 mb-1" style="font-size:0.7rem;">Transferts KIN ↔ CTN</div>
+          <div class="taux-box" id="header-taux">
+            <i class="bi bi-arrow-repeat"></i>
+            <span>Taux :</span>
+            <span class="taux-value" id="header-taux-value">—</span>
+            <span>FCFA/$</span>
+          </div>
+        </div>
+        <img src="./rdc.png" alt="RDC" class="header-flag">
+      </div>
+    </div>
+  </header>
+
+  <!-- MENU BURGER -->
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="menuBurger">
+    <div class="offcanvas-header text-white" style="background:var(--tl-primary);">
+      <h5 class="offcanvas-title"><i class="bi bi-cash-coin"></i> TransLedger</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+      <ul class="nav flex-column nav-pills p-2" id="menuNav">
+        <li class="nav-item"><a class="nav-link menu-link active" href="#" data-page="tbord"><i class="bi bi-speedometer2"></i> Tableau de bord</a></li>
+        <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="compta"><i class="bi bi-calculator"></i> Comptabilité &amp; Analyse</a></li>
+        <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="appro"><i class="bi bi-wallet2"></i> Approvisionnement</a></li>
+        <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="kin-ctn"><i class="bi bi-geo-alt-fill"></i> Agence Kinshasa (RDC)</a></li>
+        <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="ctn-kin"><i class="bi bi-geo-alt-fill"></i> Agence Cotonou (Bénin)</a></li>
+        <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="codes"><i class="bi bi-hourglass-split"></i> Codes en attente</a></li>
+        <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="depenses"><i class="bi bi-cash-stack"></i> Dépenses</a></li>
+        <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="agents"><i class="bi bi-people"></i> Comptes agents</a></li>
+        <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="parametres"><i class="bi bi-gear"></i> Paramètres</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- CONTENU PRINCIPAL -->
+  <main class="container-fluid py-3 flex-grow-1" style="max-width:900px;">
+
+    <!-- ============ PAGE TABLEAU DE BORD ============ -->
+    <section id="page-tbord" class="page active">
+      <h2 class="h5 text-primary mb-3"><i class="bi bi-speedometer2"></i> Tableau de bord</h2>
+
+      <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3">
+          <div class="kpi-card" style="background:#0d6e5c;">
+            <div class="label">Solde CTN</div>
+            <div class="value" id="kpi-solde-ctn">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="kpi-card" style="background:#0d6e5c;">
+            <div class="label">Solde KIN</div>
+            <div class="value" id="kpi-solde-kin">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="kpi-card" style="background:#198754;">
+            <div class="label">Entrées \$</div>
+            <div class="value" id="kpi-entrees">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="kpi-card" style="background:#dc3545;">
+            <div class="label">Sorties \$</div>
+            <div class="value" id="kpi-sorties">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label small fw-bold mb-0">Mois :</label>
+            <input type="month" id="tbord-mois" class="form-control form-control-sm" style="width:auto;">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PAGE COMPTABILITÉ & ANALYSE ============ -->
+    <section id="page-compta" class="page">
+      <h2 class="h5 text-primary mb-3"><i class="bi bi-calculator"></i> Comptabilité &amp; Analyse</h2>
+
+<div class="card shadow-sm mb-3">
+        <div class="card-header bg-white fw-bold small">
+          <i class="bi bi-clipboard-data"></i> SITUATION DES OPÉRATIONS
+        </div>
+        <div class="card-body p-0">
+          <div id="tbord-situation" class="table-responsive"></div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-white fw-bold small">
+          <i class="bi bi-calculator"></i> SOLDE FINAL
+        </div>
+        <div class="card-body p-0">
+          <div id="tbord-solde" class="table-responsive"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PAGE APPROVISIONNEMENT ============ -->
+    <section id="page-appro" class="page">
+      <h2 class="h5 text-primary mb-3"><i class="bi bi-wallet2"></i> Approvisionnement</h2>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Date</label>
+              <input type="date" id="appro-date" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Libellé</label>
+              <input type="text" id="appro-libelle" class="form-control form-control-sm" placeholder="Appro. caisse">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Fonds Kin (En $)</label>
+              <input type="number" step="0.01" id="appro-fonds-kin" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Transfert reçu Divine ($)</label>
+              <input type="number" step="0.01" id="appro-fonds-divine" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Change ($)</label>
+              <input type="number" step="0.01" id="appro-change" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Taux</label>
+              <input type="number" step="0.01" id="appro-taux" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Agent</label>
+              <input type="text" id="appro-agent" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3 d-flex align-items-end">
+              <button id="appro-ajouter" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-plus-circle"></i> Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold small"><i class="bi bi-list-ul"></i> Transactions du mois</span>
+          <span id="appro-total" class="badge bg-primary">Total : 0.00 $</span>
+        </div>
+        <div class="card-body p-0">
+          <div id="appro-liste" class="table-responsive"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PAGE AGENCE KINSHASA (RDC) ============ -->
+    <section id="page-kin-ctn" class="page">
+      <h2 class="h5 text-primary mb-3"><i class="bi bi-geo-alt-fill"></i> Agence Kinshasa (RDC)</h2>
+
+      <!-- KPIs -->
+      <div class="row g-2 mb-3">
+        <div class="col-4">
+          <div class="kpi-card" style="background:#0d6e5c;">
+            <div class="label">Envois</div>
+            <div class="value" id="kpi-kin-envois">—</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="kpi-card" style="background:#198754;">
+            <div class="label">Retraits</div>
+            <div class="value" id="kpi-kin-retraits">—</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="kpi-card" style="background:#fd7e14;">
+            <div class="label">À servir <span class="counter-badge zero" id="kpi-kin-count">0</span></div>
+            <div class="value" id="kpi-kin-reste">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2 boutons principaux -->
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <button id="btn-envoi-kin" class="btn btn-primary w-100 py-3 fw-bold">
+            <i class="bi bi-send-fill"></i><br>
+            <span style="font-size:0.85rem;">Envoi vers Cotonou</span>
+          </button>
+        </div>
+        <div class="col-6">
+          <button id="btn-retrait-kin" class="btn btn-success w-100 py-3 fw-bold">
+            <i class="bi bi-cash-coin"></i><br>
+            <span style="font-size:0.85rem;">Retrait à Kinshasa</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Date</label>
+              <input type="date" id="kc-date" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Heure</label>
+              <input type="time" id="kc-heure" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Taux du jour</label>
+              <input type="number" step="0.01" id="kc-taux" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Bénéficiaire</label>
+              <input type="text" id="kc-beneficiaire" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Téléphone</label>
+              <input type="tel" id="kc-telephone" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Montant reçu ($)</label>
+              <input type="number" step="0.01" id="kc-recu" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Commission ($)</label>
+              <input type="number" step="0.01" id="kc-commission" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Servi au client ($)</label>
+              <input type="number" step="0.01" id="kc-servi" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Code <i class="bi bi-lock-fill text-secondary"></i></label>
+              <input type="text" id="kc-code" class="form-control form-control-sm bg-light" readonly placeholder="Auto">
+            </div>
+            <div class="col-12 d-flex align-items-end">
+              <button id="kc-ajouter" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-plus-circle"></i> Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtres Kinshasa -->
+      <div class="btn-group btn-group-sm w-100 mb-2" role="group">
+        <button type="button" class="btn btn-outline-primary filtre-kin active" data-filtre="tous">Tous</button>
+        <button type="button" class="btn btn-outline-primary filtre-kin" data-filtre="envois">📤 Envois</button>
+        <button type="button" class="btn btn-outline-primary filtre-kin" data-filtre="retraits">📥 Retraits</button>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold small"><i class="bi bi-list-ul"></i> Opérations</span>
+          <span id="kc-totaux" class="badge bg-primary">—</span>
+        </div>
+        <div class="card-body p-0">
+          <div id="kc-liste" class="table-responsive"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PAGE AGENCE COTONOU (BÉNIN) ============ -->
+    <section id="page-ctn-kin" class="page">
+      <h2 class="h5 text-primary mb-3"><i class="bi bi-geo-alt-fill"></i> Agence Cotonou (Bénin)</h2>
+
+      <!-- KPIs -->
+      <div class="row g-2 mb-3">
+        <div class="col-4">
+          <div class="kpi-card" style="background:#0d6e5c;">
+            <div class="label">Envois</div>
+            <div class="value" id="kpi-ctn-envois">—</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="kpi-card" style="background:#198754;">
+            <div class="label">Retraits</div>
+            <div class="value" id="kpi-ctn-retraits">—</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="kpi-card" style="background:#fd7e14;">
+            <div class="label">À servir <span class="counter-badge zero" id="kpi-ctn-count">0</span></div>
+            <div class="value" id="kpi-ctn-reste">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2 boutons principaux -->
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <button id="btn-envoi-ctn" class="btn btn-primary w-100 py-3 fw-bold">
+            <i class="bi bi-send-fill"></i><br>
+            <span style="font-size:0.85rem;">Envoi vers Kinshasa</span>
+          </button>
+        </div>
+        <div class="col-6">
+          <button id="btn-retrait-ctn" class="btn btn-success w-100 py-3 fw-bold">
+            <i class="bi bi-cash-coin"></i><br>
+            <span style="font-size:0.85rem;">Retrait à Cotonou</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Date</label>
+              <input type="date" id="ck-date" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Heure</label>
+              <input type="time" id="ck-heure" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Taux du jour</label>
+              <input type="number" step="0.01" id="ck-taux" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Expéditeur</label>
+              <input type="text" id="ck-expediteur" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Tél. expéditeur</label>
+              <input type="tel" id="ck-tel-exp" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Tél. bénéficiaire</label>
+              <input type="tel" id="ck-tel-benef" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Montant reçu ($)</label>
+              <input type="number" step="0.01" id="ck-recu" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Commission ($)</label>
+              <input type="number" step="0.01" id="ck-commission" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Servi au client ($)</label>
+              <input type="number" step="0.01" id="ck-servi" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Code <i class="bi bi-lock-fill text-secondary"></i></label>
+              <input type="text" id="ck-code" class="form-control form-control-sm bg-light" readonly placeholder="Auto">
+            </div>
+            <div class="col-12 d-flex align-items-end">
+              <button id="ck-ajouter" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-plus-circle"></i> Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtres Cotonou -->
+      <div class="btn-group btn-group-sm w-100 mb-2" role="group">
+        <button type="button" class="btn btn-outline-primary filtre-ctn active" data-filtre="tous">Tous</button>
+        <button type="button" class="btn btn-outline-primary filtre-ctn" data-filtre="envois">📤 Envois</button>
+        <button type="button" class="btn btn-outline-primary filtre-ctn" data-filtre="retraits">📥 Retraits</button>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold small"><i class="bi bi-list-ul"></i> Opérations</span>
+          <span id="ck-totaux" class="badge bg-primary">—</span>
+        </div>
+        <div class="card-body p-0">
+          <div id="ck-liste" class="table-responsive"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PAGE CODES EN ATTENTE ============ -->
+    <section id="page-codes" class="page">
+      <h2 class="h5 text-primary mb-3"><i class="bi bi-hourglass-split"></i> Codes en attente</h2>
+
+      <!-- KPI -->
+      <div class="row g-2 mb-3">
+        <div class="col-4">
+          <div class="kpi-card" style="background:#fd7e14;">
+            <div class="label">À servir</div>
+            <div class="value" id="kpi-codes-reste">—</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="kpi-card" style="background:#198754;">
+            <div class="label">Servi</div>
+            <div class="value" id="kpi-codes-servi">—</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="kpi-card" style="background:#dc3545;">
+            <div class="label">Écart</div>
+            <div class="value" id="kpi-codes-ecart">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Note explicative -->
+      <div class="alert alert-info small mb-3">
+        <i class="bi bi-info-circle"></i>
+        Cette page affiche <strong>automatiquement</strong> tous les transferts dont le montant n'a pas été entièrement servi (Reste &gt; 0).
+        Pour modifier un code, cliquez sur ✏️ — la modification se répercute sur le transfert source.
+      </div>
+
+      <!-- Filtres -->
+      <div class="btn-group btn-group-sm w-100 mb-3 no-print" role="group">
+        <button type="button" class="btn btn-outline-primary filtre-codes active" data-filtre="tous">Tous</button>
+        <button type="button" class="btn btn-outline-primary filtre-codes" data-filtre="aservir">À servir</button>
+        <button type="button" class="btn btn-outline-primary filtre-codes" data-filtre="partiels">Partiels</button>
+        <button type="button" class="btn btn-outline-primary filtre-codes" data-filtre="soldes">Soldés</button>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold small"><i class="bi bi-list-ul"></i> Codes reportés</span>
+          <span id="code-total" class="badge bg-primary">—</span>
+        </div>
+        <div class="card-body p-0">
+          <div id="code-liste" class="table-responsive"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PAGE DÉPENSES ============ -->
+    <section id="page-depenses" class="page">
+      <h2 class="h5 text-primary mb-3"><i class="bi bi-cash-stack"></i> Dépenses</h2>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Ville</label>
+              <select id="dep-ville" class="form-select form-select-sm">
+                <option value="CTN">Cotonou (CTN)</option>
+                <option value="KIN">Kinshasa (KIN)</option>
+                <option value="AUTRE">Autres</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Date</label>
+              <input type="date" id="dep-date" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Libellé</label>
+              <input type="text" id="dep-libelle" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Montant ($)</label>
+              <input type="number" step="0.01" id="dep-montant" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Agent</label>
+              <input type="text" id="dep-agent" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Observation</label>
+              <input type="text" id="dep-obs" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3 d-flex align-items-end">
+              <button id="dep-ajouter" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-plus-circle"></i> Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold small"><i class="bi bi-list-ul"></i> Dépenses du mois</span>
+          <span id="dep-total" class="badge bg-primary">—</span>
+        </div>
+        <div class="card-body p-0">
+          <div id="dep-liste" class="table-responsive"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PAGE COMPTES AGENTS ============ -->
+    <section id="page-agents" class="page">
+      <h2 class="h5 text-primary mb-3"><i class="bi bi-people"></i> Comptes agents</h2>
+
+      <div class="row g-2 mb-3">
+        <div class="col-6 col-md-4">
+          <div class="kpi-card" style="background:#0d6e5c;">
+            <div class="label">Louis — Reste</div>
+            <div class="value" id="kpi-louis">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4">
+          <div class="kpi-card" style="background:#0d6e5c;">
+            <div class="label">Dorcas — Reste</div>
+            <div class="value" id="kpi-dorcas">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white fw-bold small"><i class="bi bi-person-badge"></i> Mr Louis</div>
+        <div class="card-body">
+          <div class="row g-2 mb-2">
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Date</label>
+              <input type="date" id="louis-date" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Libellé</label>
+              <input type="text" id="louis-libelle" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Entrée ($)</label>
+              <input type="number" step="0.01" id="louis-entree" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Sortie ($)</label>
+              <input type="number" step="0.01" id="louis-sortie" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3 d-flex align-items-end">
+              <button id="louis-ajouter" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-plus-circle"></i> Ajouter
+              </button>
+            </div>
+          </div>
+          <div id="louis-liste" class="table-responsive"></div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white fw-bold small"><i class="bi bi-person-badge"></i> Mme Dorcas</div>
+        <div class="card-body">
+          <div class="row g-2 mb-2">
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Date</label>
+              <input type="date" id="dorcas-date" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Libellé</label>
+              <input type="text" id="dorcas-libelle" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Fonds propres ($)</label>
+              <input type="number" step="0.01" id="dorcas-fonds" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Remboursement ($)</label>
+              <input type="number" step="0.01" id="dorcas-remb" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3 d-flex align-items-end">
+              <button id="dorcas-ajouter" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-plus-circle"></i> Ajouter
+              </button>
+            </div>
+          </div>
+          <div id="dorcas-liste" class="table-responsive"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PAGE PARAMÈTRES ============ -->
+    <section id="page-parametres" class="page">
+      <h2 class="h5 text-primary mb-3"><i class="bi bi-gear"></i> Paramètres</h2>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white fw-bold small"><i class="bi bi-calendar"></i> Mois actif</div>
+        <div class="card-body">
+          <input type="month" id="param-mois" class="form-control form-control-sm">
+          <small class="text-secondary">Toutes les saisies seront rattachées à ce mois.</small>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white fw-bold small"><i class="bi bi-currency-exchange"></i> Taux du jour</div>
+        <div class="card-body">
+          <label class="form-label small fw-bold mb-1">Taux (FCFA pour 1 $)</label>
+          <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text">1 $ =</span>
+            <input type="number" step="0.01" id="param-taux" class="form-control" placeholder="ex: 595">
+            <span class="input-group-text">FCFA</span>
+          </div>
+          <button id="param-save-taux" class="btn btn-primary btn-sm w-100">
+            <i class="bi bi-save"></i> Enregistrer le taux du jour
+          </button>
+          <small class="text-secondary d-block mt-2">Ce taux sera utilisé par défaut dans tous les formulaires.</small>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white fw-bold small"><i class="bi bi-arrow-repeat"></i> Report du mois précédent</div>
+        <div class="card-body">
+          <label class="form-label small fw-bold mb-1">Solde initial CTN ($)</label>
+          <input type="number" step="0.01" id="param-solde-ctn" class="form-control form-control-sm mb-2">
+          <label class="form-label small fw-bold mb-1">Solde initial KIN ($)</label>
+          <input type="number" step="0.01" id="param-solde-kin" class="form-control form-control-sm mb-2">
+          <button id="param-save-report" class="btn btn-primary btn-sm w-100">
+            <i class="bi bi-save"></i> Enregistrer le report
+          </button>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white fw-bold small"><i class="bi bi-database"></i> Données</div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <button id="param-export" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-download"></i> Exporter en JSON
+            </button>
+            <label class="btn btn-outline-primary btn-sm mb-0">
+              <i class="bi bi-upload"></i> Importer un JSON
+              <input type="file" id="param-import" accept=".json" hidden>
+            </label>
+            <button id="param-reset" class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-trash"></i> Réinitialiser toutes les données
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white fw-bold small"><i class="bi bi-info-circle"></i> À propos</div>
+        <div class="card-body small text-secondary">
+          <div><strong>TransLedger</strong> v1.0</div>
+          <div>Auteur : Atizoun</div>
+          <div>Gestion de transferts KIN ↔ CTN</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODAL ENVOI KINSHASA → COTONOU -->
+    <div class="modal fade" id="modalEnvoiKin" tabindex="-1">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header text-white" style="background:#0d6e5c;">
+            <h5 class="modal-title"><i class="bi bi-send-fill"></i> Envoi Kinshasa → Cotonou</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-2">
+              <div class="col-6"><label class="form-label small fw-bold mb-1">Date</label><input type="date" id="ek-date" class="form-control form-control-sm"></div>
+              <div class="col-6"><label class="form-label small fw-bold mb-1">Heure</label><input type="time" id="ek-heure" class="form-control form-control-sm"></div>
+              <div class="col-12"><label class="form-label small fw-bold mb-1">Expéditeur (nom)</label><input type="text" id="ek-expediteur" class="form-control form-control-sm"></div>
+              <div class="col-12"><label class="form-label small fw-bold mb-1">Téléphone expéditeur</label><input type="tel" id="ek-tel-exp" class="form-control form-control-sm"></div>
+              <div class="col-12"><label class="form-label small fw-bold mb-1">Bénéficiaire à Cotonou</label><input type="text" id="ek-benef" class="form-control form-control-sm"></div>
+              <div class="col-12"><label class="form-label small fw-bold mb-1">Téléphone bénéficiaire</label><input type="tel" id="ek-tel-benef" class="form-control form-control-sm"></div>
+              <div class="col-6"><label class="form-label small fw-bold mb-1">Montant reçu ($)</label><input type="number" step="0.01" id="ek-recu" class="form-control form-control-sm"></div>
+              <div class="col-6"><label class="form-label small fw-bold mb-1">Commission ($)</label><input type="number" step="0.01" id="ek-commission" class="form-control form-control-sm"></div>
+              <div class="col-6"><label class="form-label small fw-bold mb-1">À servir ($)</label><input type="number" step="0.01" id="ek-aServir" class="form-control form-control-sm bg-light" readonly></div>
+              <div class="col-6"><label class="form-label small fw-bold mb-1">Taux du jour</label><input type="number" step="0.01" id="ek-taux" class="form-control form-control-sm"></div>
+            </div>
+            <div class="alert alert-warning small mt-3 mb-0">
+              <i class="bi bi-key-fill"></i> <strong>Code secret</strong> généré automatiquement à l'enregistrement.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="enregistrerEnvoiKin()">
+              <i class="bi bi-save"></i> Enregistrer l'envoi
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL ENVOI COTONOU → KINSHASA -->
+    <div class="modal fade" id="modalEnvoiCtn" tabindex="-1">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header text-white" style="background:#0d6e5c;">
+            <h5 class="modal-title"><i class="bi bi-send-fill"></i> Envoi Cotonou → Kinshasa</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-2">
+              <div class="col-6"><label class="form-label small fw-bold mb-1">Date</label><input type="date" id="ec-date" class="form-control form-control-sm"></div>
+              <div class="col-6"><label class="form-label small fw-bold mb-1">Heure</label><input type="time" id="ec-heure" class="form-control form-control-sm"></div>
+              <div class="col-12"><label class="form-label small fw-bold mb-1">Expéditeur (nom)</label><input type="text" id="ec-expediteur" class="form-control form-control-sm"></div>
+              <div class="col-12"><label class="form-label small fw-bold mb-1">Téléphone expéditeur</label><input type="tel" id="ec-tel-exp" class="form-control form-control-sm"></div>
+              <div class="col-12"><label class="form-label small fw-bold mb-1">Bénéficiaire à Kinshasa</label><input type="text" id="ec-benef" class="form-control form-control-sm"></div>
+              <div class="col-12"><label class="form-label small fw-bold mb-1">Téléphone bénéficiaire</label><input type="tel" id="ec-tel-benef" class="form-control form-control-sm"></div>
+              <div class="col-6"><label class="form-label small fw-bold mb-1">Montant reçu ($)</label><input type="number" step="0.01" id="ec-recu" class="form-control form-control-sm"></div>
+              <div class="col-6"><label class="form-label small fw-bold mb-1">Commission ($)</label><input type="number" step="0.01" id="ec-commission" class="form-control form-control-sm"></div>
+              <div class="col-6"><label class="form-label small fw-bold mb-1">À servir ($)</label><input type="number" step="0.01" id="ec-aServir" class="form-control form-control-sm bg-light" readonly></div>
+              <div class="col-6"><label class="form-label small fw-bold mb-1">Taux du jour</label><input type="number" step="0.01" id="ec-taux" class="form-control form-control-sm"></div>
+            </div>
+            <div class="alert alert-warning small mt-3 mb-0">
+              <i class="bi bi-key-fill"></i> <strong>Code secret</strong> généré automatiquement à l'enregistrement.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="enregistrerEnvoiCtn()">
+              <i class="bi bi-save"></i> Enregistrer l'envoi
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL SUCCÈS ENVOI (avec code secret) -->
+    <div class="modal fade" id="modalSuccesEnvoi" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header text-white" style="background:#198754;">
+            <h5 class="modal-title"><i class="bi bi-check-circle-fill"></i> Envoi enregistré avec succès</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body text-center">
+            <p class="text-secondary small mb-2">🔐 CODE SECRET À COMMUNIQUER AU BÉNÉFICIAIRE</p>
+            <div class="code-secret-display" id="se-code">------</div>
+
+            <div class="d-flex justify-content-center gap-2 mt-3">
+              <button class="btn btn-primary btn-sm" id="se-btn-copie" onclick="copierCodeSecret()">
+                <i class="bi bi-clipboard"></i> Copier le code
+              </button>
+              <button class="btn btn-outline-primary btn-sm" onclick="copierTout()">
+                <i class="bi bi-clipboard-check"></i> Copier tout
+              </button>
+            </div>
+
+            <div id="se-copie-feedback" class="text-success small mt-2" style="display:none;">
+              <i class="bi bi-check2-circle"></i> Code copié dans le presse-papiers !
+            </div>
+
+            <hr>
+            <div class="text-start small">
+              <div class="d-flex justify-content-between mb-1"><span class="text-secondary">Code envoi :</span><strong id="se-info-code">—</strong></div>
+              <div class="d-flex justify-content-between mb-1"><span class="text-secondary">Expéditeur :</span><strong id="se-info-exp">—</strong></div>
+              <div class="d-flex justify-content-between mb-1"><span class="text-secondary">Bénéficiaire :</span><strong id="se-info-benef">—</strong></div>
+              <div class="d-flex justify-content-between mb-1"><span class="text-secondary">À servir :</span><strong class="text-success" id="se-info-montant">—</strong></div>
+            </div>
+            <div class="alert alert-warning small mt-3 mb-0" id="se-info-instruction">
+              <i class="bi bi-exclamation-triangle-fill"></i> Sans ce code, le bénéficiaire ne pourra pas retirer les fonds.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-success w-100 fw-bold" data-bs-dismiss="modal">
+              <i class="bi bi-check-lg"></i> Terminé
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL RETRAIT (générique pour les 2 agences) -->
+    <div class="modal fade" id="modalRetrait" tabindex="-1">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header text-white" style="background:#198754;">
+            <h5 class="modal-title"><i class="bi bi-cash-coin"></i> Retrait - <span id="mr-agence"></span></h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info small">
+              <i class="bi bi-info-circle"></i> Saisissez le <strong>code secret</strong> communiqué par l'expéditeur.
+            </div>
+            <label class="form-label small fw-bold mb-1">Code secret (6 chiffres)</label>
+            <input type="text" id="mr-code" class="form-control form-control-lg text-center font-monospace" maxlength="6" placeholder="••••••" style="letter-spacing:0.5rem; font-size:1.5rem;">
+            <button class="btn btn-outline-primary btn-sm w-100 mt-3" onclick="verifierCodeRetrait()">
+              <i class="bi bi-search"></i> Vérifier le code
+            </button>
+
+            <!-- Zone résultat (cachée par défaut) -->
+            <div id="mr-resultat" class="mt-3" style="display:none;">
+              <div class="alert alert-success small mb-2">
+                <i class="bi bi-check-circle-fill"></i> Transfert trouvé !
+              </div>
+              <div class="card bg-light">
+                <div class="card-body p-2 small">
+                  <div><strong>Code envoi :</strong> <span id="mr-info-code"></span></div>
+                  <div><strong>Expéditeur :</strong> <span id="mr-info-exp"></span></div>
+                  <div><strong>Bénéficiaire :</strong> <span id="mr-info-benef"></span></div>
+                  <div><strong>Date envoi :</strong> <span id="mr-info-date"></span></div>
+                  <hr class="my-2">
+                  <div class="d-flex justify-content-between"><span>À servir :</span><strong id="mr-info-aservir"></strong></div>
+                  <div class="d-flex justify-content-between"><span>Déjà servi :</span><strong id="mr-info-servi"></strong></div>
+                  <div class="d-flex justify-content-between text-danger"><span>Reste :</span><strong id="mr-info-reste"></strong></div>
+                </div>
+              </div>
+
+              <label class="form-label small fw-bold mt-3 mb-1">Montant à retirer maintenant ($)</label>
+              <input type="number" step="0.01" id="mr-montant" class="form-control form-control-sm">
+              <button class="btn btn-success w-100 mt-3 fw-bold" onclick="validerRetrait()">
+                <i class="bi bi-check-lg"></i> Valider le retrait
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL D'ÉDITION -->
+    <div class="modal fade" id="modalEdit" tabindex="-1">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header text-white" style="background:var(--tl-primary);">
+            <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Modifier</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="modal-edit-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="sauvegarderEdition()">
+              <i class="bi bi-save"></i> Enregistrer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER MODERNE -->
+  <footer class="app-footer-modern mt-auto">
+    <div class="text-center footer-l1">
+      💰 <strong>TransLedger</strong> v1.0 <span class="sep">•</span>
+      <strong>ATIZOUN DIGICOM</strong> <span class="sep">•</span>
+      Concepteur : <em>Atizoun Plateny AMOUSSOU</em>
+    </div>
+    <div class="text-center footer-l2">
+      <a href="mailto:atizoun@gmail.com">✉️ atizoun@gmail.com</a>
+      <span class="sep">•</span>
+      <a href="tel:+2290197744035">📞 +229 01 97 74 40 35</a>
+      <span class="sep">•</span>
+      © 2026
+    </div>
+  </footer>
+
+  <!-- SCRIPTS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  /* ================================================================ */
+  /* TransLedger - JavaScript tout-en-un                              */
+  /* Auteur : Atizoun                                                 */
+  /* ================================================================ */
+
+  function log(msg) {
+    console.log(msg);
+  }
+
+  // Intercepteur d'erreurs global (temporaire)
+  window.addEventListener('error', function(e) {
+    const overlay = document.getElementById('error-overlay');
+    const content = document.getElementById('error-content');
+    if (overlay && content) {
+      overlay.style.display = 'block';
+      const msg = (e.message || 'Erreur inconnue') + ' — ' + (e.filename || '') + ':' + (e.lineno || '');
+      content.innerHTML += '<div style="border-top:1px solid rgba(255,255,255,0.3);padding:3px 0;">' + msg + '</div>';
+    }
+  });
+
+  window.addEventListener('unhandledrejection', function(e) {
+    const overlay = document.getElementById('error-overlay');
+    const content = document.getElementById('error-content');
+    if (overlay && content) {
+      overlay.style.display = 'block';
+      const msg = 'Promise rejetée : ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason));
+      content.innerHTML += '<div style="border-top:1px solid rgba(255,255,255,0.3);padding:3px 0;">' + msg + '</div>';
+    }
+  });
+
+  /* ========== VARIABLES GLOBALES (déclarées tôt pour éviter TDZ) ========== */
+  let filtreKin = 'tous';
+  let filtreCtn = 'tous';
+  let filtreCodes = 'tous';
+  let moisActif = new Date().toISOString().slice(0, 7);
+  let tauxJour = 0;
+
+  /* ---------- BASE DE DONNÉES IndexedDB ---------- */
+  const DB_NAME = 'transledger_v2';
+  const DB_VERSION = 2;
+  let db = null;
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = (event) => {
+        const database = event.target.result;
+        const stores = ['appro', 'kin_ctn', 'ctn_kin', 'codes', 'depenses', 'louis', 'dorcas', 'config', 'retraits'];
+        stores.forEach(name => {
+          if (!database.objectStoreNames.contains(name)) {
+            database.createObjectStore(name, { keyPath: 'id', autoIncrement: true });
+          }
+        });
+      };
+      req.onsuccess = () => { db = req.result; resolve(db); };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function dbAdd(store, item) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, 'readwrite');
+      const req = tx.objectStore(store).add(item);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  function dbGetAll(store) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, 'readonly');
+      const req = tx.objectStore(store).getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  function dbDelete(store, id) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, 'readwrite');
+      const req = tx.objectStore(store).delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+  function dbGet(store, id) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, 'readonly');
+      const req = tx.objectStore(store).get(id);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  function dbUpdate(store, item) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, 'readwrite');
+      const req = tx.objectStore(store).put(item);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  function dbClear(store) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, 'readwrite');
+      const req = tx.objectStore(store).clear();
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  /* ---------- MOIS ACTIF ---------- */
+  // moisActif déjà déclaré en haut
+
+  async function getConfig(key) {
+    const items = await dbGetAll('config');
+    const item = items.find(i => i.key === key);
+    return item ? item.value : null;
+  }
+  /* ---------- TAUX DU JOUR ---------- */
+  async function chargerTauxJour() {
+    tauxJour = (await getConfig('taux_jour')) || 0;
+    majAffichageTaux();
+  }
+  async function setTauxJour(valeur) {
+    tauxJour = parseFloat(valeur) || 0;
+    await setConfig('taux_jour', tauxJour);
+    majAffichageTaux();
+  }
+  function majAffichageTaux() {
+    const el = document.getElementById('header-taux-value');
+    if (el) el.textContent = tauxJour > 0 ? tauxJour : '—';
+  }
+
+  async function setConfig(key, value) {
+    const items = await dbGetAll('config');
+    const item = items.find(i => i.key === key);
+    const tx = db.transaction('config', 'readwrite');
+    if (item) { item.value = value; tx.objectStore('config').put(item); }
+    else       { tx.objectStore('config').add({ key, value }); }
+  }
+
+  /* ---------- NAVIGATION ---------- */
+  function changerPage(nom) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const cible = document.getElementById('page-' + nom);
+    if (cible) cible.classList.add('active');
+
+    document.querySelectorAll('.menu-link').forEach(l => {
+      l.classList.toggle('active', l.dataset.page === nom);
+    });
+
+    const offcanvas = document.getElementById('menuBurger');
+    if (offcanvas && offcanvas.classList.contains('show')) {
+      const bsOff = bootstrap.Offcanvas.getInstance(offcanvas);
+      if (bsOff) bsOff.hide();
+    }
+
+    if (nom === 'tbord')      afficherTbord();
+    if (nom === 'compta')     afficherTbord();
+    if (nom === 'appro')      { afficherAppro(); preremplirTaux('appro-taux'); }
+    if (nom === 'kin-ctn')    { afficherKinCtn(); preremplirTaux('kc-taux'); }
+    if (nom === 'ctn-kin')    { afficherCtnKin(); preremplirTaux('ck-taux'); }
+    if (nom === 'codes')      afficherCodes();
+    if (nom === 'depenses')   afficherDepenses();
+    if (nom === 'agents')     afficherAgents();
+    if (nom === 'parametres') afficherParametres();
+
+    log('→ Page : ' + nom);
+  }
+
+  function initNavigation() {
+    document.querySelectorAll('[data-page]').forEach(el => {
+      el.addEventListener('click', (e) => { e.preventDefault(); changerPage(el.dataset.page); });
+    });
+  }
+
+  /* ---------- PRÉ-REMPLIR TAUX ---------- */
+  function preremplirTaux(id) {
+    if (tauxJour > 0) {
+      const el = document.getElementById(id);
+      if (el && !el.value) el.value = tauxJour;
+    }
+  }
+
+  /* ---------- HELPER : FORMULAIRE VERS OBJET ---------- */
+  function val(id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const v = el.value.trim();
+    if (v === '') return null;
+    return el.type === 'number' ? parseFloat(v) : v;
+  }
+  function resetForm(ids) {
+    ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  }
+  function fmt(n) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    return Number(n).toFixed(2);
+  }
+
+  /* ========== GÉNÉRATION CODE UNIQUE ========== */
+  async function generateUniqueCode(prefix) {
+    const p = prefix === 'kin' ? 'K' : 'C';
+    const kinCtn = await dbGetAll('kin_ctn');
+    const ctnKin = await dbGetAll('ctn_kin');
+    const existing = new Set([
+      ...kinCtn.map(t => t.code).filter(Boolean),
+      ...ctnKin.map(t => t.code).filter(Boolean)
+    ]);
+    let code;
+    let attempts = 0;
+    do {
+      const d = new Date();
+      const yy = String(d.getFullYear()).slice(2);
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+      code = p + yy + mm + dd + rand;
+      attempts++;
+    } while (existing.has(code) && attempts < 20);
+    return code;
+  }
+
+  /* ========== PAGE APPROVISIONNEMENT ========== */
+  async function ajouterAppro() {
+    const item = {
+      mois: moisActif,
+      date: val('appro-date'),
+      libelle: val('appro-libelle'),
+      fondsKin: val('appro-fonds-kin') || 0,
+      fondsDivine: val('appro-fonds-divine') || 0,
+      change: val('appro-change') || 0,
+      taux: val('appro-taux') || 0,
+      fcfa: (val('appro-change') || 0) * (val('appro-taux') || 0),
+      agent: val('appro-agent')
+    };
+    if (!item.date) { alert('La date est obligatoire.'); return; }
+    await dbAdd('appro', item);
+    resetForm(['appro-date', 'appro-libelle', 'appro-fonds-kin', 'appro-fonds-divine', 'appro-change', 'appro-taux', 'appro-agent']);
+    log('➕ Appro ajouté : ' + fmt(item.fondsKin));
+    await afficherAppro();
+  }
+
+  async function afficherAppro() {
+    const items = (await dbGetAll('appro')).filter(i => i.mois === moisActif);
+    const c = document.getElementById('appro-liste');
+    if (!c) return;
+    if (items.length === 0) { c.innerHTML = '<div class="p-3 text-secondary small">Aucune transaction.</div>'; document.getElementById('appro-total').textContent = 'Total : 0.00 $'; return; }
+
+    let html = '<table class="table table-sm table-tl mb-0"><thead><tr><th>Date</th><th>Libellé</th><th>Fonds Kin</th><th>Divine</th><th>Change</th><th>Taux</th><th>FCFA</th><th>Agent</th><th></th></tr></thead><tbody>';
+    let totKin = 0, totDivine = 0, totChange = 0;
+    items.forEach(i => {
+      totKin += i.fondsKin || 0;
+      totDivine += i.fondsDivine || 0;
+      totChange += i.change || 0;
+      html += `<tr>
+        <td>${i.date || '—'}</td>
+        <td style="text-align:left;">${i.libelle || ''}</td>
+        <td>${fmt(i.fondsKin)}</td>
+        <td>${fmt(i.fondsDivine)}</td>
+        <td>${fmt(i.change)}</td>
+        <td>${i.taux || '—'}</td>
+        <td>${i.fcfa ? Math.round(i.fcfa).toLocaleString('fr-FR') : '—'}</td>
+        <td>${i.agent || ''}</td>
+        <td><button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('appro',${i.id})"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('appro',${i.id})"><i class="bi bi-trash"></i></button></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    c.innerHTML = html;
+    document.getElementById('appro-total').textContent = 'Kin : ' + fmt(totKin) + ' $ | Divine : ' + fmt(totDivine) + ' $';
+  }
+
+  /* ========== PAGE KIN → CTN ========== */
+  async function ajouterKinCtn() {
+    const recu = val('kc-recu') || 0;
+    const comm = val('kc-commission') || 0;
+    const item = {
+      mois: moisActif,
+      date: val('kc-date'),
+      heure: val('kc-heure'),
+      taux: val('kc-taux'),
+      beneficiaire: val('kc-beneficiaire'),
+      telephone: val('kc-telephone'),
+      recu: recu,
+      commission: comm,
+      aServir: recu - comm,
+      servi: val('kc-servi') || 0,
+      code: await generateUniqueCode('kin')
+    };
+    item.reste = item.aServir - item.servi;
+    if (!item.date) { alert('La date est obligatoire.'); return; }
+    await dbAdd('kin_ctn', item);
+    resetForm(['kc-date', 'kc-heure', 'kc-taux', 'kc-beneficiaire', 'kc-telephone', 'kc-recu', 'kc-commission', 'kc-servi', 'kc-code']);
+    log('➕ KIN→CTN : ' + fmt(recu) + ' $');
+    await afficherKinCtn();
+    await afficherCodes();
+  }
+
+  async function afficherKinCtn() {
+    const envois = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
+    const tousRetraits = (await dbGetAll('retraits')).filter(r => r.mois === moisActif);
+    const retraits = tousRetraits.filter(r => r.sourceStore === 'ctn_kin');
+
+    const c = document.getElementById('kc-liste');
+    if (!c) return;
+
+    let operations = [];
+    if (filtreKin === 'tous' || filtreKin === 'envois') {
+      envois.forEach(e => operations.push({ type: 'envoi', date: e.date, data: e }));
+    }
+    if (filtreKin === 'tous' || filtreKin === 'retraits') {
+      retraits.forEach(r => operations.push({ type: 'retrait', date: r.date, data: r }));
+    }
+
+    if (operations.length === 0) {
+      c.innerHTML = '<div class="p-3 text-secondary small">Aucune opération.</div>';
+      document.getElementById('kc-totaux').textContent = '—';
+      return;
+    }
+
+    operations.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    let html = '<table class="table table-sm table-tl mb-0"><thead><tr>';
+    html += '<th>Type</th><th>Date</th><th>H</th><th>Code</th><th>Nom</th><th>Montant</th><th>Détails</th><th></th>';
+    html += '</tr></thead><tbody>';
+
+    let totEnvois = 0, totRetraits = 0;
+
+    operations.forEach(op => {
+      if (op.type === 'envoi') {
+        const e = op.data;
+        totEnvois += e.recu || 0;
+        html += `<tr>
+          <td><span class="badge bg-primary"><i class="bi bi-send-fill"></i> Envoi</span></td>
+          <td>${e.date || ''}</td>
+          <td>${e.heure || ''}</td>
+          <td><span class="badge bg-light text-dark font-monospace" style="font-size:0.65rem;">${e.code || '—'}</span></td>
+          <td style="text-align:left;">${e.beneficiaire || ''}</td>
+          <td><strong>${fmt(e.recu)}</strong></td>
+          <td><small class="text-secondary">Reçu → servir ${fmt(e.aServir)}<br>Servi ${fmt(e.servi)}<br>Reste <span class="${(e.reste||0)>0?'statut-ko':'statut-ok'}">${fmt(e.reste)}</span></small></td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('kin_ctn',${e.id})"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('kin_ctn',${e.id})"><i class="bi bi-trash"></i></button>
+          </td>
+        </tr>`;
+      } else {
+        const r = op.data;
+        totRetraits += r.montantRetrait || 0;
+        html += `<tr style="background:#f0fff4;">
+          <td><span class="badge bg-success"><i class="bi bi-cash-coin"></i> Retrait</span></td>
+          <td>${r.date || ''}</td>
+          <td>${r.heure || ''}</td>
+          <td><span class="badge bg-light text-dark font-monospace" style="font-size:0.65rem;">${r.codeEnvoi || '—'}</span></td>
+          <td style="text-align:left;">${r.beneficiaire || r.expediteur || ''}</td>
+          <td><strong class="text-success">${fmt(r.montantRetrait)}</strong></td>
+          <td><small class="text-secondary">Retrait ${r.agence}<br>Reste après : ${fmt(r.resteApres)}</small></td>
+          <td>
+            <button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('retraits',${r.id})"><i class="bi bi-trash"></i></button>
+          </td>
+        </tr>`;
+      }
+    });
+
+    html += '</tbody></table>';
+    c.innerHTML = html;
+    document.getElementById('kc-totaux').textContent = '📤 ' + fmt(totEnvois) + ' $ | 📥 ' + fmt(totRetraits) + ' $';
+  }
+
+  /* ========== PAGE CTN → KIN ========== */
+  async function ajouterCtnKin() {
+    const recu = val('ck-recu') || 0;
+    const comm = val('ck-commission') || 0;
+    const servi = val('ck-servi') || 0;
+    const item = {
+      mois: moisActif,
+      date: val('ck-date'),
+      heure: val('ck-heure'),
+      taux: val('ck-taux'),
+      expediteur: val('ck-expediteur'),
+      telExp: val('ck-tel-exp'),
+      telBenef: val('ck-tel-benef'),
+      recu: recu,
+      commission: comm,
+      aServir: recu - comm,
+      servi: servi,
+      code: await generateUniqueCode('ctn')
+    };
+    item.reste = item.aServir - servi;
+    if (!item.date) { alert('La date est obligatoire.'); return; }
+    await dbAdd('ctn_kin', item);
+    resetForm(['ck-date', 'ck-heure', 'ck-taux', 'ck-expediteur', 'ck-tel-exp', 'ck-tel-benef', 'ck-recu', 'ck-commission', 'ck-servi', 'ck-code']);
+    log('➕ CTN→KIN : ' + fmt(recu) + ' $');
+    await afficherCtnKin();
+    await afficherCodes();
+  }
+
+  async function afficherCtnKin() {
+    // Les envois CTN→KIN = opérations de l'agence Cotonou
+    const envois = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
+    // Les retraits effectués à Cotonou = retraits enregistrés avec sourceStore 'kin_ctn'
+    const tousRetraits = (await dbGetAll('retraits')).filter(r => r.mois === moisActif);
+    const retraits = tousRetraits.filter(r => r.sourceStore === 'kin_ctn');
+
+    const c = document.getElementById('ck-liste');
+    if (!c) return;
+
+    let operations = [];
+    if (filtreCtn === 'tous' || filtreCtn === 'envois') {
+      envois.forEach(e => operations.push({ type: 'envoi', date: e.date, data: e }));
+    }
+    if (filtreCtn === 'tous' || filtreCtn === 'retraits') {
+      retraits.forEach(r => operations.push({ type: 'retrait', date: r.date, data: r }));
+    }
+
+    if (operations.length === 0) {
+      c.innerHTML = '<div class="p-3 text-secondary small">Aucune opération.</div>';
+      document.getElementById('ck-totaux').textContent = '—';
+      return;
+    }
+
+    operations.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    let html = '<table class="table table-sm table-tl mb-0"><thead><tr>';
+    html += '<th>Type</th><th>Date</th><th>H</th><th>Code</th><th>Nom</th><th>Montant</th><th>Détails</th><th></th>';
+    html += '</tr></thead><tbody>';
+
+    let totEnvois = 0, totRetraits = 0;
+
+    operations.forEach(op => {
+      if (op.type === 'envoi') {
+        const e = op.data;
+        totEnvois += e.recu || 0;
+        html += `<tr>
+          <td><span class="badge bg-primary"><i class="bi bi-send-fill"></i> Envoi</span></td>
+          <td>${e.date || ''}</td>
+          <td>${e.heure || ''}</td>
+          <td><span class="badge bg-light text-dark font-monospace" style="font-size:0.65rem;">${e.code || '—'}</span></td>
+          <td style="text-align:left;">${e.beneficiaire || e.expediteur || ''}</td>
+          <td><strong>${fmt(e.recu)}</strong></td>
+          <td><small class="text-secondary">Reçu → servir ${fmt(e.aServir)}<br>Servi ${fmt(e.servi)}<br>Reste <span class="${(e.reste||0)>0?'statut-ko':'statut-ok'}">${fmt(e.reste)}</span></small></td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('ctn_kin',${e.id})"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('ctn_kin',${e.id})"><i class="bi bi-trash"></i></button>
+          </td>
+        </tr>`;
+      } else {
+        const r = op.data;
+        totRetraits += r.montantRetrait || 0;
+        html += `<tr style="background:#f0fff4;">
+          <td><span class="badge bg-success"><i class="bi bi-cash-coin"></i> Retrait</span></td>
+          <td>${r.date || ''}</td>
+          <td>${r.heure || ''}</td>
+          <td><span class="badge bg-light text-dark font-monospace" style="font-size:0.65rem;">${r.codeEnvoi || '—'}</span></td>
+          <td style="text-align:left;">${r.beneficiaire || r.expediteur || ''}</td>
+          <td><strong class="text-success">${fmt(r.montantRetrait)}</strong></td>
+          <td><small class="text-secondary">Retrait ${r.agence}<br>Reste après : ${fmt(r.resteApres)}</small></td>
+          <td>
+            <button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('retraits',${r.id})"><i class="bi bi-trash"></i></button>
+          </td>
+        </tr>`;
+      }
+    });
+
+    html += '</tbody></table>';
+    c.innerHTML = html;
+    document.getElementById('ck-totaux').textContent = '📤 ' + fmt(totEnvois) + ' $ | 📥 ' + fmt(totRetraits) + ' $';
+  }
+
+  /* ========== PAGE CODES EN ATTENTE ========== */
+  async function ajouterCode() {
+    const item = {
+      mois: moisActif,
+      date: val('code-date'),
+      heure: val('code-heure'),
+      benef: val('code-benef'),
+      tel: val('code-tel'),
+      reste: val('code-reste') || 0,
+      servi: val('code-servi') || 0,
+      equiv: val('code-equiv') || 0,
+      report: val('code-report')
+    };
+    item.ecart = item.reste - item.servi;
+    if (!item.date) { alert('La date est obligatoire.'); return; }
+    await dbAdd('codes', item);
+    resetForm(['code-date', 'code-heure', 'code-benef', 'code-tel', 'code-reste', 'code-servi', 'code-equiv', 'code-report']);
+    log('➕ Code : ' + fmt(item.reste) + ' $');
+    await afficherCodes();
+  }
+
+  function statutCode(item) {
+    const servi = item.servi || 0;
+    const aServir = item.aServir || 0;
+    if (servi === 0) return 'aservir';
+    if (servi >= aServir) return 'soldes';
+    return 'partiels';
+  }
+
+  function badgeStatut(statut) {
+    if (statut === 'aservir')  return '<span class="badge bg-warning text-dark">À servir</span>';
+    if (statut === 'soldes')   return '<span class="badge bg-success">Soldé</span>';
+    if (statut === 'partiels') return '<span class="badge bg-info text-dark">Partiel</span>';
+    return '';
+  }
+
+  function badgeDirection(dir) {
+    if (dir === 'kin_ctn') return '<span class="badge bg-primary">KIN → CTN</span>';
+    if (dir === 'ctn_kin') return '<span class="badge bg-secondary">CTN → KIN</span>';
+    return '';
+  }
+
+  async function afficherCodes() {
+    const c = document.getElementById('code-liste');
+    if (!c) return;
+
+    // Récupérer les transferts des 2 directions
+    const kinCtn = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
+    const ctnKin = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
+
+    // Marquer la direction et ne garder que ceux avec reste > 0
+    const codes = [];
+    kinCtn.forEach(i => {
+      if ((i.reste || 0) > 0) codes.push({ ...i, direction: 'kin_ctn', sourceStore: 'kin_ctn' });
+    });
+    ctnKin.forEach(i => {
+      if ((i.reste || 0) > 0) codes.push({ ...i, direction: 'ctn_kin', sourceStore: 'ctn_kin' });
+    });
+
+    // KPI globaux (sur tous les codes avec reste > 0)
+    let totAServir = 0, totServi = 0, totReste = 0;
+    codes.forEach(i => {
+      totAServir += i.aServir || 0;
+      totServi += i.servi || 0;
+      totReste += i.reste || 0;
+    });
+    document.getElementById('kpi-codes-reste').textContent = fmt(totReste) + ' $';
+    document.getElementById('kpi-codes-servi').textContent = fmt(totServi) + ' $';
+    document.getElementById('kpi-codes-ecart').textContent = fmt(totAServir - totServi) + ' $';
+
+    // Filtres
+    let filtered = codes;
+    if (filtreCodes === 'aservir')  filtered = codes.filter(i => statutCode(i) === 'aservir');
+    if (filtreCodes === 'partiels') filtered = codes.filter(i => statutCode(i) === 'partiels');
+    if (filtreCodes === 'soldes')   filtered = codes.filter(i => statutCode(i) === 'soldes');
+
+    if (filtered.length === 0) {
+      const msg = codes.length === 0
+        ? 'Aucun code en attente. Tous les transferts sont entièrement servis.'
+        : 'Aucun code pour ce filtre.';
+      c.innerHTML = '<div class="p-3 text-secondary small">' + msg + '</div>';
+      document.getElementById('code-total').textContent = '—';
+      return;
+    }
+
+    let html = '<table class="table table-sm table-tl mb-0"><thead><tr>';
+    html += '<th>Date</th><th>Dir.</th><th>Bénéf.</th><th>Tel</th>';
+    html += '<th>À servir</th><th>Servi</th><th>Reste</th><th>Statut</th><th></th>';
+    html += '</tr></thead><tbody>';
+
+    // Trier par date décroissante
+    filtered.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    filtered.forEach(i => {
+      const statut = statutCode(i);
+      const nom = i.beneficiaire || i.expediteur || '—';
+      const tel = i.telephone || i.telBenef || '—';
+      html += `<tr>
+        <td>${i.date || ''}</td>
+        <td>${badgeDirection(i.direction)}</td>
+        <td style="text-align:left;">${nom}</td>
+        <td>${tel}</td>
+        <td>${fmt(i.aServir)}</td>
+        <td>${fmt(i.servi)}</td>
+        <td class="statut-ko">${fmt(i.reste)}</td>
+        <td>${badgeStatut(statut)}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('${i.sourceStore}',${i.id})"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('${i.sourceStore}',${i.id})"><i class="bi bi-trash"></i></button>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    c.innerHTML = html;
+
+    document.getElementById('code-total').textContent =
+      filtered.length + ' code(s) — Reste total : ' + fmt(totReste) + ' $';
+  }
+
+  function initFiltresCodes() {
+    document.querySelectorAll('.filtre-codes').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filtre-codes').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filtreCodes = btn.dataset.filtre;
+        afficherCodes();
+      });
+    });
+  }
+
+  function initFiltresAgences() {
+    document.querySelectorAll('.filtre-kin').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filtre-kin').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filtreKin = btn.dataset.filtre;
+        afficherKinCtn();
+      });
+    });
+    document.querySelectorAll('.filtre-ctn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filtre-ctn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filtreCtn = btn.dataset.filtre;
+        afficherCtnKin();
+      });
+    });
+  }
+
+  /* ========== PAGE DÉPENSES ========== */
+  async function ajouterDepense() {
+    const item = {
+      mois: moisActif,
+      ville: val('dep-ville'),
+      date: val('dep-date'),
+      libelle: val('dep-libelle'),
+      montant: val('dep-montant') || 0,
+      agent: val('dep-agent'),
+      obs: val('dep-obs')
+    };
+    if (!item.date || !item.montant) { alert('Date et montant obligatoires.'); return; }
+    await dbAdd('depenses', item);
+    resetForm(['dep-date', 'dep-libelle', 'dep-montant', 'dep-agent', 'dep-obs']);
+    log('➕ Dépense ' + item.ville + ' : ' + fmt(item.montant) + ' $');
+    await afficherDepenses();
+  }
+
+  async function afficherDepenses() {
+    const items = (await dbGetAll('depenses')).filter(i => i.mois === moisActif);
+    const c = document.getElementById('dep-liste');
+    if (!c) return;
+    if (items.length === 0) { c.innerHTML = '<div class="p-3 text-secondary small">Aucune dépense.</div>'; document.getElementById('dep-total').textContent = '—'; return; }
+
+    let html = '<table class="table table-sm table-tl mb-0"><thead><tr><th>Ville</th><th>Date</th><th>Libellé</th><th>Montant</th><th>Agent</th><th></th></tr></thead><tbody>';
+    let totCTN = 0, totKIN = 0, totAutre = 0;
+    items.forEach(i => {
+      if (i.ville === 'CTN') totCTN += i.montant || 0;
+      else if (i.ville === 'KIN') totKIN += i.montant || 0;
+      else totAutre += i.montant || 0;
+      html += `<tr>
+        <td><span class="badge bg-secondary">${i.ville}</span></td>
+        <td>${i.date || ''}</td>
+        <td style="text-align:left;">${i.libelle || ''}</td>
+        <td>${fmt(i.montant)}</td>
+        <td>${i.agent || ''}</td>
+        <td><button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('depenses',${i.id})"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('depenses',${i.id})"><i class="bi bi-trash"></i></button></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    c.innerHTML = html;
+    document.getElementById('dep-total').textContent = 'CTN : ' + fmt(totCTN) + ' $ | KIN : ' + fmt(totKIN) + ' $ | Autres : ' + fmt(totAutre) + ' $';
+  }
+
+  /* ========== PAGE AGENTS ========== */
+  async function ajouterLouis() {
+    const item = {
+      mois: moisActif,
+      date: val('louis-date'),
+      libelle: val('louis-libelle'),
+      entree: val('louis-entree') || 0,
+      sortie: val('louis-sortie') || 0
+    };
+    if (!item.date) { alert('La date est obligatoire.'); return; }
+    await dbAdd('louis', item);
+    resetForm(['louis-date', 'louis-libelle', 'louis-entree', 'louis-sortie']);
+    log('➕ Louis : entrée ' + fmt(item.entree) + ' $');
+    await afficherAgents();
+  }
+
+  async function afficherLouis() {
+    const items = (await dbGetAll('louis')).filter(i => i.mois === moisActif);
+    const c = document.getElementById('louis-liste');
+    if (!c) return;
+    if (items.length === 0) { c.innerHTML = '<div class="text-secondary small">Aucune transaction.</div>'; document.getElementById('kpi-louis').textContent = '—'; return; }
+
+    let html = '<table class="table table-sm table-tl mb-0"><thead><tr><th>Date</th><th>Libellé</th><th>Entrée</th><th>Sortie</th><th></th></tr></thead><tbody>';
+    let totE = 0, totS = 0;
+    items.forEach(i => {
+      totE += i.entree || 0;
+      totS += i.sortie || 0;
+      html += `<tr>
+        <td>${i.date || ''}</td>
+        <td style="text-align:left;">${i.libelle || ''}</td>
+        <td>${fmt(i.entree)}</td>
+        <td>${fmt(i.sortie)}</td>
+        <td><button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('louis',${i.id})"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('louis',${i.id})"><i class="bi bi-trash"></i></button></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    c.innerHTML = html;
+    document.getElementById('kpi-louis').textContent = fmt(totE - totS) + ' $';
+  }
+
+  async function ajouterDorcas() {
+    const item = {
+      mois: moisActif,
+      date: val('dorcas-date'),
+      libelle: val('dorcas-libelle'),
+      fonds: val('dorcas-fonds') || 0,
+      remb: val('dorcas-remb') || 0
+    };
+    if (!item.date) { alert('La date est obligatoire.'); return; }
+    await dbAdd('dorcas', item);
+    resetForm(['dorcas-date', 'dorcas-libelle', 'dorcas-fonds', 'dorcas-remb']);
+    log('➕ Dorcas : fonds ' + fmt(item.fonds) + ' $');
+    await afficherAgents();
+  }
+
+  async function afficherDorcas() {
+    const items = (await dbGetAll('dorcas')).filter(i => i.mois === moisActif);
+    const c = document.getElementById('dorcas-liste');
+    if (!c) return;
+    if (items.length === 0) { c.innerHTML = '<div class="text-secondary small">Aucune transaction.</div>'; document.getElementById('kpi-dorcas').textContent = '—'; return; }
+
+    let html = '<table class="table table-sm table-tl mb-0"><thead><tr><th>Date</th><th>Libellé</th><th>Fonds</th><th>Remb.</th><th></th></tr></thead><tbody>';
+    let totF = 0, totR = 0;
+    items.forEach(i => {
+      totF += i.fonds || 0;
+      totR += i.remb || 0;
+      html += `<tr>
+        <td>${i.date || ''}</td>
+        <td style="text-align:left;">${i.libelle || ''}</td>
+        <td>${fmt(i.fonds)}</td>
+        <td>${fmt(i.remb)}</td>
+        <td><button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('dorcas',${i.id})"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('dorcas',${i.id})"><i class="bi bi-trash"></i></button></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    c.innerHTML = html;
+    document.getElementById('kpi-dorcas').textContent = fmt(totF - totR) + ' $';
+  }
+
+  async function afficherAgents() {
+    await afficherLouis();
+    await afficherDorcas();
+  }
+
+  /* ========== ÉDITION GÉNÉRIQUE ========== */
+  // Structure des champs éditables par store
+  const CHAMPS_EDIT = {
+    appro: [
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'libelle', label: 'Libellé', type: 'text' },
+      { key: 'fondsKin', label: 'Fonds Kin ($)', type: 'number' },
+      { key: 'fondsDivine', label: 'Transfert Divine ($)', type: 'number' },
+      { key: 'change', label: 'Change ($)', type: 'number' },
+      { key: 'taux', label: 'Taux', type: 'number' },
+      { key: 'agent', label: 'Agent', type: 'text' }
+    ],
+    kin_ctn: [
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'heure', label: 'Heure', type: 'time' },
+      { key: 'taux', label: 'Taux', type: 'number' },
+      { key: 'beneficiaire', label: 'Bénéficiaire', type: 'text' },
+      { key: 'telephone', label: 'Téléphone', type: 'tel' },
+      { key: 'recu', label: 'Montant reçu ($)', type: 'number' },
+      { key: 'commission', label: 'Commission ($)', type: 'number' },
+      { key: 'servi', label: 'Servi ($)', type: 'number' }
+    ],
+    ctn_kin: [
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'heure', label: 'Heure', type: 'time' },
+      { key: 'taux', label: 'Taux', type: 'number' },
+      { key: 'expediteur', label: 'Expéditeur', type: 'text' },
+      { key: 'telExp', label: 'Tél. expéditeur', type: 'tel' },
+      { key: 'telBenef', label: 'Tél. bénéficiaire', type: 'tel' },
+      { key: 'recu', label: 'Montant reçu ($)', type: 'number' },
+      { key: 'commission', label: 'Commission ($)', type: 'number' },
+      { key: 'servi', label: 'Servi au client ($)', type: 'number' }
+    ],
+    codes: [
+      { key: 'date', label: 'Date réception', type: 'date' },
+      { key: 'heure', label: 'Heure', type: 'time' },
+      { key: 'benef', label: 'Bénéficiaire', type: 'text' },
+      { key: 'tel', label: 'Téléphone', type: 'tel' },
+      { key: 'reste', label: 'Reste à servir', type: 'number' },
+      { key: 'servi', label: 'Montant servi', type: 'number' },
+      { key: 'equiv', label: 'Équivalent $', type: 'number' },
+      { key: 'report', label: 'Date de report', type: 'date' }
+    ],
+    depenses: [
+      { key: 'ville', label: 'Ville', type: 'select', options: ['CTN', 'KIN', 'AUTRE'] },
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'libelle', label: 'Libellé', type: 'text' },
+      { key: 'montant', label: 'Montant ($)', type: 'number' },
+      { key: 'agent', label: 'Agent', type: 'text' },
+      { key: 'obs', label: 'Observation', type: 'text' }
+    ],
+    louis: [
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'libelle', label: 'Libellé', type: 'text' },
+      { key: 'entree', label: 'Entrée ($)', type: 'number' },
+      { key: 'sortie', label: 'Sortie ($)', type: 'number' }
+    ],
+    dorcas: [
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'libelle', label: 'Libellé', type: 'text' },
+      { key: 'fonds', label: 'Fonds propres ($)', type: 'number' },
+      { key: 'remb', label: 'Remboursement ($)', type: 'number' }
+    ]
+  };
+
+  let editionEnCours = { store: null, id: null };
+
+  async function editerItem(store, id) {
+    const item = await dbGet(store, id);
+    if (!item) { alert('Élément introuvable'); return; }
+
+    editionEnCours = { store, id };
+    const champs = CHAMPS_EDIT[store] || [];
+
+    let html = '<div class="row g-2">';
+    champs.forEach(c => {
+      const v = item[c.key] ?? '';
+      html += '<div class="col-12 col-md-6">';
+      html += `<label class="form-label small fw-bold mb-1">${c.label}</label>`;
+      if (c.type === 'select') {
+        html += `<select id="edit-${c.key}" class="form-select form-select-sm">`;
+        c.options.forEach(opt => {
+          html += `<option value="${opt}" ${v === opt ? 'selected' : ''}>${opt}</option>`;
+        });
+        html += '</select>';
+      } else {
+        html += `<input type="${c.type}" step="${c.type === 'number' ? '0.01' : ''}" id="edit-${c.key}" class="form-control form-control-sm" value="${v}">`;
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+
+    document.getElementById('modal-edit-body').innerHTML = html;
+    const modal = new bootstrap.Modal(document.getElementById('modalEdit'));
+    modal.show();
+  }
+
+  async function sauvegarderEdition() {
+    if (!editionEnCours.store || !editionEnCours.id) return;
+    const item = await dbGet(editionEnCours.store, editionEnCours.id);
+    if (!item) return;
+
+    const champs = CHAMPS_EDIT[editionEnCours.store] || [];
+    champs.forEach(c => {
+      const el = document.getElementById('edit-' + c.key);
+      if (!el) return;
+      const v = el.value.trim();
+      item[c.key] = (c.type === 'number') ? (v === '' ? 0 : parseFloat(v)) : (v === '' ? null : v);
+    });
+
+    // Recalculs spécifiques
+    if (editionEnCours.store === 'appro') {
+      item.fcfa = (item.change || 0) * (item.taux || 0);
+    }
+    if (editionEnCours.store === 'kin_ctn') {
+      item.aServir = (item.recu || 0) - (item.commission || 0);
+      item.reste = item.aServir - (item.servi || 0);
+    }
+    if (editionEnCours.store === 'ctn_kin') {
+      item.aServir = (item.recu || 0) - (item.commission || 0);
+      item.reste = item.aServir - (item.servi || 0);
+    }
+    if (editionEnCours.store === 'codes') {
+      item.ecart = (item.reste || 0) - (item.servi || 0);
+    }
+
+    await dbUpdate(editionEnCours.store, item);
+    log('✏️ Modifié : ' + editionEnCours.store + ' #' + editionEnCours.id);
+
+    bootstrap.Modal.getInstance(document.getElementById('modalEdit')).hide();
+    editionEnCours = { store: null, id: null };
+
+    // Rafraîchir les vues
+    await initAll();
+  }
+
+  /* ========== SUPPRESSION GÉNÉRIQUE ========== */
+  async function supprimerItem(store, id) {
+    if (!confirm('Supprimer cette ligne ?')) return;
+    await dbDelete(store, id);
+    log('🗑️ Supprimé de ' + store);
+    if (store === 'appro')     await afficherAppro();
+    if (store === 'kin_ctn')   { await afficherKinCtn(); await afficherCodes(); }
+    if (store === 'ctn_kin')   { await afficherCtnKin(); await afficherCodes(); }
+    if (store === 'depenses')  await afficherDepenses();
+    if (store === 'louis')     await afficherLouis();
+    if (store === 'dorcas')    await afficherDorcas();
+  }
+
+  /* ========== PAGE TABLEAU DE BORD ========== */
+  async function calculerSoldes() {
+    const appro = (await dbGetAll('appro')).filter(i => i.mois === moisActif);
+    const kinCtn = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
+    const ctnKin = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
+    const codes = (await dbGetAll('codes')).filter(i => i.mois === moisActif);
+    const dep = (await dbGetAll('depenses')).filter(i => i.mois === moisActif);
+    const louis = (await dbGetAll('louis')).filter(i => i.mois === moisActif);
+    const dorcas = (await dbGetAll('dorcas')).filter(i => i.mois === moisActif);
+
+    // Totaux
+    const totApproKin = appro.reduce((s, i) => s + (i.fondsKin || 0), 0);
+    const totApproDivine = appro.reduce((s, i) => s + (i.fondsDivine || 0), 0);
+
+    const totKinCtnServi = kinCtn.reduce((s, i) => s + (i.servi || 0), 0);
+    const totKinCtnComm = kinCtn.reduce((s, i) => s + (i.commission || 0), 0);
+    const totKinCtnRecu = kinCtn.reduce((s, i) => s + (i.recu || 0), 0);
+
+    const totCtnKinRecu = ctnKin.reduce((s, i) => s + (i.recu || 0), 0);
+    const totCtnKinComm = ctnKin.reduce((s, i) => s + (i.commission || 0), 0);
+
+    const totCodesReste = codes.reduce((s, i) => s + (i.reste || 0), 0);
+    const totCodesServi = codes.reduce((s, i) => s + (i.servi || 0), 0);
+
+    const totDepCTN = dep.filter(i => i.ville === 'CTN').reduce((s, i) => s + (i.montant || 0), 0);
+    const totDepKIN = dep.filter(i => i.ville === 'KIN').reduce((s, i) => s + (i.montant || 0), 0);
+    const totDepAutre = dep.filter(i => i.ville === 'AUTRE').reduce((s, i) => s + (i.montant || 0), 0);
+
+    const totLouisReste = louis.reduce((s, i) => s + (i.entree || 0) - (i.sortie || 0), 0);
+    const totDorcasReste = dorcas.reduce((s, i) => s + (i.fonds || 0) - (i.remb || 0), 0);
+
+    const soldeInitialCTN = (await getConfig('solde_initial_ctn_' + moisActif)) || 0;
+    const soldeInitialKIN = (await getConfig('solde_initial_kin_' + moisActif)) || 0;
+
+    // Calcul CTN
+    const entreesCTN = soldeInitialCTN + totApproKin + totApproDivine + totCtnKinRecu + totLouisReste + totDorcasReste;
+    const sortiesCTN = totKinCtnServi + totDepCTN + totDepAutre;
+    const soldeCTN = entreesCTN - sortiesCTN;
+
+    // Calcul KIN
+    const entreesKIN = soldeInitialKIN + totKinCtnRecu + totCodesReste;
+    const sortiesKIN = totCtnKinRecu + totDepKIN;
+    const soldeKIN = entreesKIN - sortiesKIN;
+
+    return {
+      soldeCTN, soldeKIN,
+      totApproKin, totApproDivine,
+      totKinCtnRecu, totKinCtnServi, totKinCtnComm,
+      totCtnKinRecu, totCtnKinComm,
+      totCodesReste, totCodesServi,
+      totDepCTN, totDepKIN, totDepAutre,
+      totLouisReste, totDorcasReste,
+      entreesCTN, sortiesCTN, entreesKIN, sortiesKIN,
+      soldeInitialCTN, soldeInitialKIN,
+      hasData: (appro.length + kinCtn.length + ctnKin.length + codes.length + dep.length + louis.length + dorcas.length) > 0
+    };
+  }
+
+  async function afficherTbord() {
+    const s = await calculerSoldes();
+
+    // KPI
+    document.getElementById('kpi-solde-ctn').textContent = fmt(s.soldeCTN) + ' $';
+    document.getElementById('kpi-solde-kin').textContent = fmt(s.soldeKIN) + ' $';
+    document.getElementById('kpi-entrees').textContent = fmt(s.entreesCTN + s.entreesKIN) + ' $';
+    document.getElementById('kpi-sorties').textContent = fmt(s.sortiesCTN + s.sortiesKIN) + ' $';
+
+    // Situation
+    const situ = document.getElementById('tbord-situation');
+    situ.innerHTML = `
+      <table class="table table-sm table-tl mb-0">
+        <thead><tr><th style="text-align:left;">Rubrique</th><th>Cotonou</th><th>Kinshasa</th></tr></thead>
+        <tbody>
+          <tr><td style="text-align:left;">Solde initial</td><td>${fmt(s.soldeInitialCTN)}</td><td>${fmt(s.soldeInitialKIN)}</td></tr>
+          <tr><td style="text-align:left;">Approvisionnement</td><td>${fmt(s.totApproKin + s.totApproDivine)}</td><td>—</td></tr>
+          <tr><td style="text-align:left;">Louis / Dorcas</td><td>${fmt(s.totLouisReste + s.totDorcasReste)}</td><td>—</td></tr>
+          <tr><td style="text-align:left;">Entrées transferts</td><td>${fmt(s.totCtnKinRecu)}</td><td>${fmt(s.totKinCtnRecu)}</td></tr>
+          <tr><td style="text-align:left;">Codes servis</td><td>${fmt(s.totKinCtnServi)}</td><td>${fmt(s.totCtnKinRecu)}</td></tr>
+          <tr><td style="text-align:left;">Codes en attente</td><td>${fmt(s.totCodesReste)}</td><td>—</td></tr>
+          <tr class="table-light"><td style="text-align:left;"><strong>SOUS-TOTAL ENTRÉES</strong></td><td><strong>${fmt(s.entreesCTN)}</strong></td><td><strong>${fmt(s.entreesKIN)}</strong></td></tr>
+          <tr><td style="text-align:left;">Sorties de fonds</td><td>${fmt(s.totDepCTN)}</td><td>${fmt(s.totDepKIN)}</td></tr>
+          <tr><td style="text-align:left;">Autres dépenses</td><td>${fmt(s.totDepAutre)}</td><td>—</td></tr>
+          <tr class="table-light"><td style="text-align:left;"><strong>SOUS-TOTAL SORTIES</strong></td><td><strong>${fmt(s.sortiesCTN)}</strong></td><td><strong>${fmt(s.sortiesKIN)}</strong></td></tr>
+          <tr><td style="text-align:left;">Commissions</td><td>${fmt(s.totKinCtnComm)}</td><td>${fmt(s.totCtnKinComm)}</td></tr>
+          <tr class="table-success"><td style="text-align:left;"><strong>MONTANT RESTANT</strong></td><td><strong>${fmt(s.soldeCTN)}</strong></td><td><strong>${fmt(s.soldeKIN)}</strong></td></tr>
+        </tbody>
+      </table>`;
+
+    // Solde final
+    const soldeDiv = document.getElementById('tbord-solde');
+    soldeDiv.innerHTML = `
+      <table class="table table-sm table-tl mb-0">
+        <tbody>
+          <tr><td style="text-align:left;">Total entrées</td><td>${fmt(s.entreesCTN + s.entreesKIN)} $</td></tr>
+          <tr><td style="text-align:left;">Total sorties</td><td>${fmt(s.sortiesCTN + s.sortiesKIN)} $</td></tr>
+          <tr class="table-primary"><td style="text-align:left;"><strong>SOLDE GLOBAL</strong></td><td><strong>${fmt(s.soldeCTN + s.soldeKIN)} $</strong></td></tr>
+        </tbody>
+      </table>`;
+
+    // Mois actif
+    const inp = document.getElementById('tbord-mois');
+    if (inp) inp.value = moisActif;
+  }
+
+  /* ========== PAGE PARAMÈTRES ========== */
+  async function afficherParametres() {
+    document.getElementById('param-mois').value = moisActif;
+    document.getElementById('param-taux').value = tauxJour || '';
+    const s = await calculerSoldes();
+    document.getElementById('param-solde-ctn').value = s.soldeInitialCTN || '';
+    document.getElementById('param-solde-kin').value = s.soldeInitialKIN || '';
+  }
+
+  async function sauvegarderReport() {
+    const ctn = val('param-solde-ctn') || 0;
+    const kin = val('param-solde-kin') || 0;
+    await setConfig('solde_initial_ctn_' + moisActif, ctn);
+    await setConfig('solde_initial_kin_' + moisActif, kin);
+    log('💾 Report enregistré : CTN ' + fmt(ctn) + ' $, KIN ' + fmt(kin) + ' $');
+    alert('Report enregistré !');
+    await afficherTbord();
+  }
+
+  async function exporterJSON() {
+    const data = {
+      version: 1,
+      date: new Date().toISOString(),
+      moisActif: moisActif,
+      appro: await dbGetAll('appro'),
+      kin_ctn: await dbGetAll('kin_ctn'),
+      ctn_kin: await dbGetAll('ctn_kin'),
+      codes: await dbGetAll('codes'),
+      depenses: await dbGetAll('depenses'),
+      louis: await dbGetAll('louis'),
+      dorcas: await dbGetAll('dorcas'),
+      retraits: await dbGetAll('retraits'),
+      config: await dbGetAll('config')
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'transledger_backup_' + moisActif + '_' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    log('💾 Export JSON effectué');
+  }
+
+  async function importerJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!confirm('Cette action va REMPLACER toutes les données. Continuer ?')) return;
+    try {
+      const data = JSON.parse(await file.text());
+      const stores = ['appro', 'kin_ctn', 'ctn_kin', 'codes', 'depenses', 'louis', 'dorcas', 'retraits', 'config'];
+      for (const s of stores) {
+        await dbClear(s);
+        for (const item of (data[s] || [])) await dbAdd(s, item);
+      }
+      if (data.moisActif) { moisActif = data.moisActif; await setConfig('mois_actif', moisActif); }
+      alert('Import réussi !');
+      log('📥 Import JSON réussi');
+      await initAll();
+    } catch (err) {
+      alert('Erreur import : ' + err.message);
+      log('❌ Import : ' + err.message);
+    }
+  }
+
+  async function resetDB() {
+    if (!confirm('⚠️ Supprimer TOUTES les données ?')) return;
+    const stores = ['appro', 'kin_ctn', 'ctn_kin', 'codes', 'depenses', 'louis', 'dorcas', 'retraits', 'config'];
+    for (const s of stores) await dbClear(s);
+    log('♻️ Base réinitialisée');
+    await initAll();
+  }
+
+  /* ========== CODE SECRET (6 chiffres) ========== */
+  async function genererCodeSecret() {
+    const kinCtn = await dbGetAll('kin_ctn');
+    const ctnKin = await dbGetAll('ctn_kin');
+    const existing = new Set([
+      ...kinCtn.map(t => t.codeSecret).filter(Boolean),
+      ...ctnKin.map(t => t.codeSecret).filter(Boolean)
+    ]);
+    let code;
+    let attempts = 0;
+    do {
+      code = String(Math.floor(100000 + Math.random() * 900000));
+      attempts++;
+    } while (existing.has(code) && attempts < 30);
+    return code;
+  }
+
+  /* ========== OUVRIR MODAL ENVOI ========== */
+  function ouvrirEnvoiKin() {
+    resetForm(['ek-date', 'ek-heure', 'ek-expediteur', 'ek-tel-exp', 'ek-benef', 'ek-tel-benef', 'ek-recu', 'ek-commission', 'ek-aServir', 'ek-taux']);
+    document.getElementById('ek-date').value = new Date().toISOString().slice(0, 10);
+    if (tauxJour > 0) document.getElementById('ek-taux').value = tauxJour;
+    new bootstrap.Modal(document.getElementById('modalEnvoiKin')).show();
+  }
+  function ouvrirEnvoiCtn() {
+    resetForm(['ec-date', 'ec-heure', 'ec-expediteur', 'ec-tel-exp', 'ec-benef', 'ec-tel-benef', 'ec-recu', 'ec-commission', 'ec-aServir', 'ec-taux']);
+    document.getElementById('ec-date').value = new Date().toISOString().slice(0, 10);
+    if (tauxJour > 0) document.getElementById('ec-taux').value = tauxJour;
+    new bootstrap.Modal(document.getElementById('modalEnvoiCtn')).show();
+  }
+
+  /* ========== AUTO-CALCUL À SERVIR ========== */
+  function calcEnvoiKin() {
+    const recu = parseFloat(document.getElementById('ek-recu').value) || 0;
+    const comm = parseFloat(document.getElementById('ek-commission').value) || 0;
+    document.getElementById('ek-aServir').value = (recu - comm).toFixed(2);
+  }
+  function calcEnvoiCtn() {
+    const recu = parseFloat(document.getElementById('ec-recu').value) || 0;
+    const comm = parseFloat(document.getElementById('ec-commission').value) || 0;
+    document.getElementById('ec-aServir').value = (recu - comm).toFixed(2);
+  }
+
+  /* ========== ENREGISTRER ENVOI KIN → CTN ========== */
+  async function enregistrerEnvoiKin() {
+    const recu = parseFloat(document.getElementById('ek-recu').value) || 0;
+    const comm = parseFloat(document.getElementById('ek-commission').value) || 0;
+    const date = document.getElementById('ek-date').value;
+    if (!date) { alert('La date est obligatoire.'); return; }
+    if (!recu) { alert('Le montant reçu est obligatoire.'); return; }
+
+    const codeSecret = await genererCodeSecret();
+    const codeEnvoi = await generateUniqueCode('kin');
+
+    const item = {
+      mois: moisActif,
+      date: date,
+      heure: document.getElementById('ek-heure').value,
+      taux: parseFloat(document.getElementById('ek-taux').value) || 0,
+      expediteur: document.getElementById('ek-expediteur').value,
+      telExp: document.getElementById('ek-tel-exp').value,
+      beneficiaire: document.getElementById('ek-benef').value,
+      telephone: document.getElementById('ek-tel-benef').value,
+      recu: recu,
+      commission: comm,
+      aServir: recu - comm,
+      servi: 0,
+      code: codeEnvoi,
+      codeSecret: codeSecret,
+      type: 'envoi'
+    };
+    item.reste = item.aServir;
+
+    await dbAdd('kin_ctn', item);
+    bootstrap.Modal.getInstance(document.getElementById('modalEnvoiKin')).hide();
+    log('➕ Envoi KIN→CTN : ' + fmt(recu) + ' $');
+
+    // Afficher le code secret (une seule fois)
+    // Afficher le modal de succès avec copie automatique
+    await afficherModalSucces(codeSecret, codeEnvoi, item.expediteur, item.beneficiaire, item.aServir, 'Kinshasa', 'Cotonou');
+
+    await afficherKinCtn();
+    await afficherCodes();
+    await afficherTbord();
+    await majCompteurs();
+  }
+
+  /* ========== ENREGISTRER ENVOI CTN → KIN ========== */
+  async function enregistrerEnvoiCtn() {
+    const recu = parseFloat(document.getElementById('ec-recu').value) || 0;
+    const comm = parseFloat(document.getElementById('ec-commission').value) || 0;
+    const date = document.getElementById('ec-date').value;
+    if (!date) { alert('La date est obligatoire.'); return; }
+    if (!recu) { alert('Le montant reçu est obligatoire.'); return; }
+
+    const codeSecret = await genererCodeSecret();
+    const codeEnvoi = await generateUniqueCode('ctn');
+
+    const item = {
+      mois: moisActif,
+      date: date,
+      heure: document.getElementById('ec-heure').value,
+      taux: parseFloat(document.getElementById('ec-taux').value) || 0,
+      expediteur: document.getElementById('ec-expediteur').value,
+      telExp: document.getElementById('ec-tel-exp').value,
+      beneficiaire: document.getElementById('ec-benef').value,
+      telephone: document.getElementById('ec-tel-benef').value,
+      recu: recu,
+      commission: comm,
+      aServir: recu - comm,
+      servi: 0,
+      code: codeEnvoi,
+      codeSecret: codeSecret,
+      type: 'envoi'
+    };
+    item.reste = item.aServir;
+
+    await dbAdd('ctn_kin', item);
+    bootstrap.Modal.getInstance(document.getElementById('modalEnvoiCtn')).hide();
+    log('➕ Envoi CTN→KIN : ' + fmt(recu) + ' $');
+
+    // Afficher le modal de succès avec copie automatique
+    await afficherModalSucces(codeSecret, codeEnvoi, item.expediteur, item.beneficiaire, item.aServir, 'Cotonou', 'Kinshasa');
+
+    await afficherCtnKin();
+    await afficherCodes();
+    await afficherTbord();
+    await majCompteurs();
+  }
+
+  /* ========== FILTRES AGENCES (déclarations déplacées en haut) ========== */
+
+  /* ========== MODAL SUCCÈS + COPIE AUTO ========== */
+  let codeSuivant = { secret: '', info: '' };
+
+  async function afficherModalSucces(codeSecret, codeEnvoi, expediteur, benef, montant, agenceSource, agenceDest) {
+    document.getElementById('se-code').textContent = codeSecret;
+    document.getElementById('se-info-code').textContent = codeEnvoi;
+    document.getElementById('se-info-exp').textContent = expediteur || '—';
+    document.getElementById('se-info-benef').textContent = benef || '—';
+    document.getElementById('se-info-montant').textContent = fmt(montant) + ' $';
+
+    // Préparer le texte complet à copier
+    codeSuivant.secret = codeSecret;
+    codeSuivant.info = '🔐 RETRAIT AFRI LINK LEDGER' +
+      '\n━━━━━━━━━━━━━━━━━━━━━━━━' +
+      '\nCode envoi : ' + codeEnvoi +
+      '\nExpéditeur : ' + (expediteur || '—') +
+      '\nBénéficiaire : ' + (benef || '—') +
+      '\nAgence : ' + agenceSource + ' → ' + agenceDest +
+      '\nMontant à servir : ' + fmt(montant) + ' $' +
+      '\n' +
+      '\n🔑 CODE SECRET : ' + codeSecret +
+      '\n━━━━━━━━━━━━━━━━━━━━━━━━' +
+      '\nPrésentez ce code à l\'agence ' + agenceDest + ' pour retirer les fonds.';
+
+    // Feedback caché au départ
+    document.getElementById('se-copie-feedback').style.display = 'none';
+
+    // Afficher le modal
+    new bootstrap.Modal(document.getElementById('modalSuccesEnvoi')).show();
+
+    // Copie automatique après 400ms
+    setTimeout(async () => {
+      const ok = await copierTexte(codeSuivant.info);
+      if (ok) {
+        const fb = document.getElementById('se-copie-feedback');
+        fb.style.display = 'block';
+        document.getElementById('se-code').classList.add('copie-success');
+        log('📋 Code secret copié automatiquement');
+      }
+    }, 400);
+  }
+
+  async function copierTexte(texte) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(texte);
+        return true;
+      } else {
+        // Fallback pour anciens navigateurs
+        const ta = document.createElement('textarea');
+        ta.value = texte;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        return true;
+      }
+    } catch (err) {
+      log('❌ Copie échouée : ' + err.message);
+      return false;
+    }
+  }
+
+  async function copierCodeSecret() {
+    const ok = await copierTexte(codeSuivant.secret);
+    if (ok) {
+      const fb = document.getElementById('se-copie-feedback');
+      fb.style.display = 'block';
+      document.getElementById('se-code').classList.add('copie-success');
+      setTimeout(() => document.getElementById('se-code').classList.remove('copie-success'), 700);
+    } else {
+      alert('Code : ' + codeSuivant.secret);
+    }
+  }
+
+  async function copierTout() {
+    const ok = await copierTexte(codeSuivant.info);
+    if (ok) {
+      const fb = document.getElementById('se-copie-feedback');
+      fb.style.display = 'block';
+      document.getElementById('se-code').classList.add('copie-success');
+      setTimeout(() => document.getElementById('se-code').classList.remove('copie-success'), 700);
+    } else {
+      alert(codeSuivant.info);
+    }
+  }
+
+  /* ========== COMPTEURS AGENCES ========== */
+  async function majCompteurs() {
+    const kinCtn = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
+    const ctnKin = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
+    const retraits = (await dbGetAll('retraits')).filter(r => r.mois === moisActif);
+
+    // ===== AGENCE KINSHASA =====
+    // Envois KIN : ceux émis depuis KIN (kin_ctn)
+    const totEnvoisKin = kinCtn.reduce((s, i) => s + (i.recu || 0), 0);
+    // Retraits à KIN : retraits effectués à l'agence KIN (sourceStore = 'ctn_kin')
+    const retraitsKin = retraits.filter(r => r.sourceStore === 'ctn_kin');
+    const totRetraitsKin = retraitsKin.reduce((s, r) => s + (r.montantRetrait || 0), 0);
+    // Reste à servir à KIN = transferts venant de CTN avec reste > 0
+    const ctnKinReste = ctnKin.filter(i => (i.reste || 0) > 0);
+    const nbKin = ctnKinReste.length;
+    const totKinReste = ctnKinReste.reduce((s, i) => s + (i.reste || 0), 0);
+
+    // ===== AGENCE COTONOU =====
+    // Envois CTN : ceux émis depuis CTN (ctn_kin)
+    const totEnvoisCtn = ctnKin.reduce((s, i) => s + (i.recu || 0), 0);
+    // Retraits à CTN : retraits effectués à l'agence CTN (sourceStore = 'kin_ctn')
+    const retraitsCtn = retraits.filter(r => r.sourceStore === 'kin_ctn');
+    const totRetraitsCtn = retraitsCtn.reduce((s, r) => s + (r.montantRetrait || 0), 0);
+    // Reste à servir à CTN = transferts venant de KIN avec reste > 0
+    const kinCtnReste = kinCtn.filter(i => (i.reste || 0) > 0);
+    const nbCtn = kinCtnReste.length;
+    const totCtnReste = kinCtnReste.reduce((s, i) => s + (i.reste || 0), 0);
+
+    // ===== MISE À JOUR DOM =====
+    // KPI Kinshasa
+    const elKinEnvois = document.getElementById('kpi-kin-envois');
+    if (elKinEnvois) elKinEnvois.textContent = fmt(totEnvoisKin) + ' $';
+    const elKinRetraits = document.getElementById('kpi-kin-retraits');
+    if (elKinRetraits) elKinRetraits.textContent = fmt(totRetraitsKin) + ' $';
+    const elKinReste = document.getElementById('kpi-kin-reste');
+    if (elKinReste) elKinReste.textContent = fmt(totKinReste) + ' $';
+    const badgeKin = document.getElementById('kpi-kin-count');
+    if (badgeKin) {
+      badgeKin.textContent = nbKin;
+      badgeKin.classList.toggle('zero', nbKin === 0);
+    }
+
+    // KPI Cotonou
+    const elCtnEnvois = document.getElementById('kpi-ctn-envois');
+    if (elCtnEnvois) elCtnEnvois.textContent = fmt(totEnvoisCtn) + ' $';
+    const elCtnRetraits = document.getElementById('kpi-ctn-retraits');
+    if (elCtnRetraits) elCtnRetraits.textContent = fmt(totRetraitsCtn) + ' $';
+    const elCtnReste = document.getElementById('kpi-ctn-reste');
+    if (elCtnReste) elCtnReste.textContent = fmt(totCtnReste) + ' $';
+    const badgeCtn = document.getElementById('kpi-ctn-count');
+    if (badgeCtn) {
+      badgeCtn.textContent = nbCtn;
+      badgeCtn.classList.toggle('zero', nbCtn === 0);
+    }
+  }
+
+  /* ========== RETRAIT ========== */
+  let retraitEnCours = { item: null, sourceStore: null };
+
+  function ouvrirRetraitKin() {
+    document.getElementById('mr-agence').textContent = 'Kinshasa (RDC)';
+    document.getElementById('mr-code').value = '';
+    document.getElementById('mr-resultat').style.display = 'none';
+    retraitEnCours = { item: null, sourceStore: 'ctn_kin' }; // Retrait à KIN = transferts venant de CTN
+    new bootstrap.Modal(document.getElementById('modalRetrait')).show();
+  }
+
+  function ouvrirRetraitCtn() {
+    document.getElementById('mr-agence').textContent = 'Cotonou (Bénin)';
+    document.getElementById('mr-code').value = '';
+    document.getElementById('mr-resultat').style.display = 'none';
+    retraitEnCours = { item: null, sourceStore: 'kin_ctn' }; // Retrait à CTN = transferts venant de KIN
+    new bootstrap.Modal(document.getElementById('modalRetrait')).show();
+  }
+
+  async function verifierCodeRetrait() {
+    const codeSaisi = document.getElementById('mr-code').value.trim();
+    if (codeSaisi.length !== 6) { alert('Le code doit faire 6 chiffres.'); return; }
+
+    const items = await dbGetAll(retraitEnCours.sourceStore);
+    const item = items.find(i => i.codeSecret === codeSaisi && (i.reste || 0) > 0);
+
+    if (!item) {
+      alert('❌ Code invalide ou transfert déjà soldé.');
+      document.getElementById('mr-resultat').style.display = 'none';
+      return;
+    }
+
+    retraitEnCours.item = item;
+    document.getElementById('mr-info-code').textContent = item.code || '—';
+    document.getElementById('mr-info-exp').textContent = item.expediteur || '—';
+    document.getElementById('mr-info-benef').textContent = item.beneficieraire || item.beneficiaire || '—';
+    document.getElementById('mr-info-date').textContent = item.date || '—';
+    document.getElementById('mr-info-aservir').textContent = fmt(item.aServir) + ' $';
+    document.getElementById('mr-info-servi').textContent = fmt(item.servi) + ' $';
+    document.getElementById('mr-info-reste').textContent = fmt(item.reste) + ' $';
+    document.getElementById('mr-montant').value = (item.reste || 0).toFixed(2);
+    document.getElementById('mr-montant').max = item.reste || 0;
+    document.getElementById('mr-resultat').style.display = 'block';
+    log('🔍 Code vérifié : ' + codeSaisi);
+  }
+
+  async function validerRetrait() {
+    if (!retraitEnCours.item) return;
+    const montant = parseFloat(document.getElementById('mr-montant').value) || 0;
+    const item = retraitEnCours.item;
+    const reste = item.reste || 0;
+
+    if (montant <= 0) { alert('Montant invalide.'); return; }
+    if (montant > reste) { alert('Le montant dépasse le reste à servir (' + fmt(reste) + ' $).'); return; }
+
+    item.servi = (item.servi || 0) + montant;
+    item.reste = (item.aServir || 0) - item.servi;
+
+    await dbUpdate(retraitEnCours.sourceStore, item);
+
+    // Enregistrer le retrait dans la collection retraits
+    const retrait = {
+      mois: moisActif,
+      date: new Date().toISOString().slice(0, 10),
+      heure: new Date().toTimeString().slice(0, 5),
+      sourceStore: retraitEnCours.sourceStore,
+      transfertId: item.id,
+      codeEnvoi: item.code || '',
+      codeSecret: item.codeSecret || '',
+      expediteur: item.expediteur || '',
+      beneficiaire: item.beneficiaire || item.benef || '',
+      telephone: item.telephone || item.telBenef || '',
+      montantRetrait: montant,
+      resteApres: item.reste,
+      agence: retraitEnCours.sourceStore === 'kin_ctn' ? 'Cotonou' : 'Kinshasa'
+    };
+    await dbAdd('retraits', retrait);
+
+    log('💵 Retrait : ' + fmt(montant) + ' $ (reste ' + fmt(item.reste) + ' $)');
+
+    bootstrap.Modal.getInstance(document.getElementById('modalRetrait')).hide();
+    alert('✅ Retrait validé !\n\nMontant retiré : ' + fmt(montant) + ' $\nReste à servir : ' + fmt(item.reste) + ' $');
+
+    retraitEnCours = { item: null, sourceStore: null };
+    await afficherKinCtn();
+    await afficherCtnKin();
+    await afficherCodes();
+    await afficherTbord();
+    await majCompteurs();
+  }
+
+  /* ========== INITIALISATION ========== */
+  async function initAll() {
+    await afficherTbord();
+    await majCompteurs();
+    await afficherAppro();
+    await afficherKinCtn();
+    await afficherCtnKin();
+    await afficherCodes();
+    await afficherDepenses();
+    await afficherAgents();
+    await afficherParametres();
+  }
+
+  function majBadge(txt) {
+    // Badge supprimé
+  }
+
+  // Écran de diagnostic plein écran
+  function diagStep(etape, erreur) {
+    // Diagnostic désactivé (gardé pour compatibilité)
+    if (erreur) console.error('[DIAG] ' + etape);
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    log('🚀 TransLedger démarrage...');
+    majBadge('⏳ DOM prêt');
+    diagStep('1. DOMContentLoaded déclenché ✅');
+    try {
+      diagStep('2. Ouverture IndexedDB...');
+      await openDB();
+      log('✅ IndexedDB prêt');
+      majBadge('✅ DB prête');
+      diagStep('3. IndexedDB ouverte ✅');
+      const savedMois = await getConfig('mois_actif');
+      if (savedMois) moisActif = savedMois;
+      diagStep('4. Mois actif chargé ✅');
+      await chargerTauxJour();
+      diagStep('5. Taux du jour chargé ✅');
+    } catch (err) {
+      log('❌ Erreur IndexedDB : ' + err.message);
+      diagStep('❌ ERREUR DB : ' + err.message, true);
+    }
+
+    try {
+      initNavigation();
+      log('✅ Navigation active');
+      majBadge('✅ Nav OK');
+      diagStep('6. Navigation initialisée ✅');
+    } catch (e) {
+      diagStep('❌ ERREUR Navigation : ' + e.message, true);
+    }
+
+    // Événements boutons
+    try {
+      diagStep('7. Attachement des boutons...');
+      document.getElementById('appro-ajouter').addEventListener('click', ajouterAppro);
+      diagStep('  ✅ appro-ajouter');
+      document.getElementById('kc-ajouter').addEventListener('click', ajouterKinCtn);
+      diagStep('  ✅ kc-ajouter');
+      document.getElementById('ck-ajouter').addEventListener('click', ajouterCtnKin);
+      diagStep('  ✅ ck-ajouter');
+      initFiltresCodes();
+      diagStep('  ✅ initFiltresCodes');
+      initFiltresAgences();
+      diagStep('  ✅ initFiltresAgences');
+      document.getElementById('btn-envoi-kin').addEventListener('click', ouvrirEnvoiKin);
+      document.getElementById('btn-retrait-kin').addEventListener('click', ouvrirRetraitKin);
+      document.getElementById('btn-envoi-ctn').addEventListener('click', ouvrirEnvoiCtn);
+      document.getElementById('btn-retrait-ctn').addEventListener('click', ouvrirRetraitCtn);
+      diagStep('8. Boutons Agence attachés ✅');
+    } catch (e) {
+      diagStep('❌ ERREUR Boutons : ' + e.message, true);
+    }
+
+    // Auto-calcul À servir dans les modaux d'envoi
+    try {
+      document.getElementById('ek-recu').addEventListener('input', calcEnvoiKin);
+      document.getElementById('ek-commission').addEventListener('input', calcEnvoiKin);
+      document.getElementById('ec-recu').addEventListener('input', calcEnvoiCtn);
+      document.getElementById('ec-commission').addEventListener('input', calcEnvoiCtn);
+      diagStep('9. Auto-calculs attachés ✅');
+    } catch (e) {
+      diagStep('❌ ERREUR Auto-calc : ' + e.message, true);
+    }
+
+    try {
+      document.getElementById('dep-ajouter').addEventListener('click', ajouterDepense);
+      document.getElementById('louis-ajouter').addEventListener('click', ajouterLouis);
+      document.getElementById('dorcas-ajouter').addEventListener('click', ajouterDorcas);
+      diagStep('10. Boutons Agents/Dépenses attachés ✅');
+    } catch (e) {
+      diagStep('❌ ERREUR Dépenses/Agents : ' + e.message, true);
+    }
+    try {
+    document.getElementById('param-save-taux').addEventListener('click', async () => {
+      const v = val('param-taux') || 0;
+      await setTauxJour(v);
+      log('💱 Taux du jour : ' + v + ' FCFA/$');
+      alert('Taux enregistré : ' + v + ' FCFA/$');
+    });
+    document.getElementById('param-save-report').addEventListener('click', sauvegarderReport);
+    document.getElementById('param-export').addEventListener('click', exporterJSON);
+    document.getElementById('param-import').addEventListener('change', importerJSON);
+    document.getElementById('param-reset').addEventListener('click', resetDB);
+    diagStep('11. Boutons Paramètres attachés ✅');
+    } catch (e) {
+      diagStep('❌ ERREUR Paramètres : ' + e.message, true);
+    }
+
+    document.getElementById('tbord-mois').addEventListener('change', async (e) => {
+      moisActif = e.target.value;
+      await setConfig('mois_actif', moisActif);
+      log('📅 Mois actif : ' + moisActif);
+      await initAll();
+    });
+
+    document.getElementById('param-mois').addEventListener('change', async (e) => {
+      moisActif = e.target.value;
+      await setConfig('mois_actif', moisActif);
+      log('📅 Mois actif : ' + moisActif);
+      await initAll();
+    });
+
+    try {
+      diagStep('12. initAll() en cours...');
+      await initAll();
+      log('✅ Toutes les pages prêtes');
+      majBadge('✅ Prêt');
+      diagStep('✅✅✅ TOUT EST PRÊT ✅✅✅');
+    } catch (e) {
+      log('❌ Init : ' + e.message);
+      majBadge('❌ ' + e.message);
+      diagStep('❌ ERREUR initAll : ' + e.message, true);
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(() => log('✅ Service Worker enregistré'))
+        .catch(err => log('⚠️ SW : ' + err.message));
+    }
+  });
+  </script>
+</body>
+</html>
