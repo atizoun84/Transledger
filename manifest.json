@@ -1,0 +1,15 @@
+{
+  "name": "TransLedger - Transferts KIN-CTN",
+  "short_name": "TransLedger",
+  "description": "Gestion de transferts d'argent Kinshasa ↔ Cotonou - par Atizoun",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d6e5c",
+  "theme_color": "#0d6e5c",
+  "lang": "fr",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
