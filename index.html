@@ -883,11 +883,11 @@
           <div class="row g-2 align-items-end">
             <div class="col-6 col-md-3">
               <label class="form-label small fw-bold mb-1">Du *</label>
-              <input type="date" id="journal-debut" class="form-control form-control-sm">
+              <input type="date" id="journal-debut" class="form-control form-control-sm" onchange="afficherJournal()">
             </div>
             <div class="col-6 col-md-3">
               <label class="form-label small fw-bold mb-1">Au *</label>
-              <input type="date" id="journal-fin" class="form-control form-control-sm">
+              <input type="date" id="journal-fin" class="form-control form-control-sm" onchange="afficherJournal()">
             </div>
             <div class="col-6 col-md-3">
               <button class="btn btn-primary btn-sm w-100" onclick="afficherJournal()">
@@ -3316,8 +3316,15 @@
 
   function _dateDansPlage(date, debut, fin) {
     if (!date) return false;
-    if (debut && date < debut) return false;
-    if (fin && date > fin) return false;
+    // Normalisation : extraire YYYY-MM-DD si format ISO plus long
+    let d = String(date).slice(0, 10);
+    // Si format DD/MM/YYYY, convertir
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) {
+      const [dd, mm, yyyy] = d.split('/');
+      d = yyyy + '-' + mm + '-' + dd;
+    }
+    if (debut && d < debut) return false;
+    if (fin && d > fin) return false;
     return true;
   }
 
@@ -3476,13 +3483,25 @@
     const debut = debutEl.value;
     const fin = finEl.value;
 
+    console.log('[Journal] Filtre appliqué :', debut, '→', fin);
+
     const opsCtn = await construireOperationsAgence('CTN', debut, fin);
     const opsKin = await construireOperationsAgence('KIN', debut, fin);
+
+    console.log('[Journal] Résultats : CTN=' + opsCtn.length + ' KIN=' + opsKin.length);
 
     document.getElementById('journal-ctn-liste').innerHTML = _rendreTableauJournal(opsCtn);
     document.getElementById('journal-kin-liste').innerHTML = _rendreTableauJournal(opsKin);
     document.getElementById('journal-ctn-count').textContent = opsCtn.length;
     document.getElementById('journal-kin-count').textContent = opsKin.length;
+
+    // Total global affiché dans le bandeau de filtres
+    const totalEl = document.getElementById('journal-total-info');
+    if (totalEl) {
+      const tot = opsCtn.length + opsKin.length;
+      totalEl.textContent = tot + ' opération(s) trouvée(s) dans la période';
+      totalEl.className = tot > 0 ? 'small text-success fw-bold' : 'small text-secondary';
+    }
 
     // En-tête impression
     const fmtFr = (s) => {
@@ -3551,12 +3570,15 @@
     try {
       diagStep('7. Attachement des boutons...');
       document.getElementById('appro-ajouter').addEventListener('click', ajouterAppro);
-      // Listener filtre période Comptabilité
+      // Listener filtre période Comptabilité (dynamique)
       const compSel = document.getElementById('compta-periode');
-      if (compSel) {
+      if (compSel && !compSel.dataset.listenerAttached) {
+        compSel.dataset.listenerAttached = 'true';
         compSel.addEventListener('change', () => {
+          console.log('[Compta] Filtre changé :', compSel.value);
           afficherComptabilite();
         });
+        console.log('[Compta] Listener attaché');
       }
 
     if (document.getElementById('comp-ajouter')) document.getElementById('comp-ajouter').addEventListener('click', ajouterCompensation);
