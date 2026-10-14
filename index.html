@@ -330,9 +330,106 @@
     <section id="page-appro" class="page">
       <h2 class="h5 text-primary mb-3"><i class="bi bi-wallet2"></i> Approvisionnement</h2>
 
-            
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="row g-2 mb-2">
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Date *</label>
+              <input type="date" id="appro-date" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-5">
+              <label class="form-label small fw-bold mb-1">Agence à approvisionner *</label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="appro-agence" id="appro-agence-ctn" value="CTN">
+                  <label class="form-check-label small" for="appro-agence-ctn">🇧🇯 Cotonou</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="appro-agence" id="appro-agence-kin" value="KIN">
+                  <label class="form-check-label small" for="appro-agence-kin">🇨🇩 Kinshasa</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label small fw-bold mb-1">Montant ($) *</label>
+              <input type="number" step="0.01" id="appro-montant" class="form-control form-control-sm">
+            </div>
+          </div>
+          <div class="row g-2">
+            <div class="col-12 col-md-6">
+              <label class="form-label small fw-bold mb-1">Agent apporteur *</label>
+              <select id="appro-agent" class="form-select form-select-sm">
+                <option value="">— Choisir un agent —</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label small fw-bold mb-1">Libellé</label>
+              <input type="text" id="appro-libelle" class="form-control form-control-sm" placeholder="Ex : Apport caisse KIN">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold mb-1">Observation</label>
+              <textarea id="appro-observation" class="form-control form-control-sm" rows="2" placeholder="Notes libres…"></textarea>
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+              <button id="appro-ajouter" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle"></i> Enregistrer l'approvisionnement
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <!-- Filtres Kinshasa -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold small"><i class="bi bi-list-ul"></i> Transactions du mois</span>
+          <span id="appro-total" class="badge bg-primary">Total : 0.00 $</span>
+        </div>
+        <div class="card-body p-0">
+          <div id="appro-liste" class="table-responsive"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PAGE AGENCE KINSHASA (RDC) ============ -->
+    <section id="page-kin-ctn" class="page">
+      <h2 class="h5 text-primary mb-3"><i class="bi bi-geo-alt-fill"></i> Agence Kinshasa (RDC)</h2>
+
+      <div class="row g-2 mb-3">
+        <div class="col-4">
+          <div class="kpi-card" style="background:#0d6e5c;">
+            <div class="label">Envois</div>
+            <div class="value" id="kpi-kin-envois">—</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="kpi-card" style="background:#198754;">
+            <div class="label">Retraits</div>
+            <div class="value" id="kpi-kin-retraits">—</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="kpi-card" style="background:#fd7e14;">
+            <div class="label">À servir <span class="counter-badge zero" id="kpi-kin-count">0</span></div>
+            <div class="value" id="kpi-kin-reste">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <button id="btn-envoi-kin" class="btn btn-primary w-100 py-3 fw-bold">
+            <i class="bi bi-send-fill"></i><br>
+            <span style="font-size:0.85rem;">Envoi vers Cotonou</span>
+          </button>
+        </div>
+        <div class="col-6">
+          <button id="btn-retrait-kin" class="btn btn-success w-100 py-3 fw-bold">
+            <i class="bi bi-cash-coin"></i><br>
+            <span style="font-size:0.85rem;">Retrait à Kinshasa</span>
+          </button>
+        </div>
+      </div>
+
       <div class="btn-group btn-group-sm w-100 mb-2" role="group">
         <button type="button" class="btn btn-outline-primary filtre-kin active" data-filtre="tous">Tous</button>
         <button type="button" class="btn btn-outline-primary filtre-kin" data-filtre="envois">📤 Envois</button>
@@ -421,19 +518,19 @@
         <div class="col-4">
           <div class="kpi-card" style="background:#fd7e14;">
             <div class="label">À servir</div>
-            <div class="value" id="kpi-codes-reste">—</div>
+            <div class="value" id="codes-kpi-reste">—</div>
           </div>
         </div>
         <div class="col-4">
           <div class="kpi-card" style="background:#198754;">
             <div class="label">Servi</div>
-            <div class="value" id="kpi-codes-servi">—</div>
+            <div class="value" id="codes-kpi-servi">—</div>
           </div>
         </div>
         <div class="col-4">
           <div class="kpi-card" style="background:#dc3545;">
             <div class="label">Écart</div>
-            <div class="value" id="kpi-codes-ecart">—</div>
+            <div class="value" id="codes-kpi-ecart">—</div>
           </div>
         </div>
       </div>
@@ -446,7 +543,7 @@
       </div>
 
       <!-- Filtres -->
-      <div class="btn-group btn-group-sm w-100 mb-3 no-print" role="group">
+      <div class="btn-group btn-group-sm w-100 mb-3 no-print" role="group" id="codes-filtre">
         <button type="button" class="btn btn-outline-primary filtre-codes active" data-filtre="tous">Tous</button>
         <button type="button" class="btn btn-outline-primary filtre-codes" data-filtre="aservir">À servir</button>
         <button type="button" class="btn btn-outline-primary filtre-codes" data-filtre="partiels">Partiels</button>
@@ -460,6 +557,16 @@
         </div>
         <div class="card-body p-0">
           <div id="code-liste" class="table-responsive"></div>
+        </div>
+      </div>
+    
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold small"><i class="bi bi-list-ul"></i> Codes en attente</span>
+          <span id="codes-count" class="badge bg-secondary">0</span>
+        </div>
+        <div class="card-body p-0">
+          <div id="codes-liste" class="table-responsive"></div>
         </div>
       </div>
     </section>
@@ -1011,8 +1118,8 @@
     if (nom === 'tbord')      afficherTbord();
     if (nom === 'compta')     afficherTbord();
     if (nom === 'appro')      afficherAppro();
-    if (nom === 'kin-ctn')    { afficherKinCtn(); preremplirTaux('kc-taux'); }
-    if (nom === 'ctn-kin')    { afficherCtnKin(); preremplirTaux('ck-taux'); }
+    if (nom === 'kin-ctn')    afficherKinCtn();
+    if (nom === 'ctn-kin')    afficherCtnKin();
     if (nom === 'codes')      afficherCodes();
     if (nom === 'depenses')   afficherDepenses();
     if (nom === 'agents')     afficherAgents();
@@ -1353,17 +1460,25 @@
     // KPI globaux
     const totalResteKin = kinCtn.reduce((s, i) => s + (i.reste || 0), 0);
     const totalResteCtn = ctnKin.reduce((s, i) => s + (i.reste || 0), 0);
+    const totalServiKin = kinCtn.reduce((s, i) => s + (i.servi || 0), 0);
+    const totalServiCtn = ctnKin.reduce((s, i) => s + (i.servi || 0), 0);
+    const totalAServirKin = kinCtn.reduce((s, i) => s + (i.aServir || 0), 0);
+    const totalAServirCtn = ctnKin.reduce((s, i) => s + (i.aServir || 0), 0);
     const countEl = document.getElementById('codes-count');
     if (countEl) countEl.textContent = (kinCtn.length + ctnKin.length);
 
-    const kpiKin = document.getElementById('codes-kpi-kin');
-    if (kpiKin) kpiKin.textContent = fmt(totalResteKin) + ' $';
-    const kpiCtn = document.getElementById('codes-kpi-ctn');
-    if (kpiCtn) kpiCtn.textContent = fmt(totalResteCtn) + ' $';
+    const kpiReste = document.getElementById('codes-kpi-reste');
+    if (kpiReste) kpiReste.textContent = fmt(totalResteKin + totalResteCtn) + ' $';
+    const kpiServi = document.getElementById('codes-kpi-servi');
+    if (kpiServi) kpiServi.textContent = fmt(totalServiKin + totalServiCtn) + ' $';
+    const kpiEcart = document.getElementById('codes-kpi-ecart');
+    if (kpiEcart) kpiEcart.textContent = fmt(totalAServirKin + totalAServirCtn - totalServiKin - totalServiCtn) + ' $';
 
     // Filtre (tous / kin_ctn / ctn_kin)
-    const filtreEl = document.getElementById('codes-filtre');
-    const filtre = filtreEl ? filtreEl.value : 'tous';
+    // Filtre par boutons (classe active sur .filtre-codes)
+    let filtre = 'tous';
+    const activeFiltre = document.querySelector('.filtre-codes.active');
+    if (activeFiltre) filtre = activeFiltre.dataset.filtre || 'tous';
 
     let items = [];
     if (filtre === 'tous' || filtre === 'kin_ctn') {
@@ -2311,6 +2426,15 @@
   function diagStep(etape, erreur) {
     // Diagnostic désactivé (gardé pour compatibilité)
     if (erreur) console.error('[DIAG] ' + etape);
+  }
+
+  
+  /* ========== SÉCURITÉ ÉCOUTEURS ========== */
+  function safeListen(id, event, handler) {
+    const el = document.getElementById(id);
+    if (!el) { console.warn('[safeListen] #' + id + ' introuvable'); return false; }
+    el.addEventListener(event, handler);
+    return true;
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
