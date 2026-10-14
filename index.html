@@ -413,8 +413,8 @@
 
       <div class="row g-2 mb-3">
         <div class="col-4">
-          <div class="kpi-card kpi-clickable" style="background:#0d6e5c;" onclick="ouvrirModalEnvois('KIN')" title="Cliquer pour voir le détail">
-            <div class="label">Envois <i class="bi bi-arrow-up-right-square kpi-hint"></i></div>
+          <div class="kpi-card" style="background:#0d6e5c;">
+            <div class="label">Envois</div>
             <div class="value" id="kpi-kin-envois">—</div>
           </div>
         </div>
@@ -425,8 +425,8 @@
           </div>
         </div>
         <div class="col-4">
-          <div class="kpi-card" style="background:#fd7e14;">
-            <div class="label">À servir <span class="counter-badge zero" id="kpi-kin-count">0</span></div>
+          <div class="kpi-card kpi-clickable" style="background:#fd7e14;" onclick="ouvrirModalAServir('KIN')" title="Cliquer pour voir les transferts à servir">
+            <div class="label">À servir <span class="counter-badge zero" id="kpi-kin-count">0</span> <i class="bi bi-arrow-up-right-square kpi-hint"></i></div>
             <div class="value" id="kpi-kin-reste">—</div>
           </div>
         </div>
@@ -479,8 +479,8 @@
       <!-- KPIs -->
       <div class="row g-2 mb-3">
         <div class="col-4">
-          <div class="kpi-card kpi-clickable" style="background:#0d6e5c;" onclick="ouvrirModalEnvois('CTN')" title="Cliquer pour voir le détail">
-            <div class="label">Envois <i class="bi bi-arrow-up-right-square kpi-hint"></i></div>
+          <div class="kpi-card" style="background:#0d6e5c;">
+            <div class="label">Envois</div>
             <div class="value" id="kpi-ctn-envois">—</div>
           </div>
         </div>
@@ -491,8 +491,8 @@
           </div>
         </div>
         <div class="col-4">
-          <div class="kpi-card" style="background:#fd7e14;">
-            <div class="label">À servir <span class="counter-badge zero" id="kpi-ctn-count">0</span></div>
+          <div class="kpi-card kpi-clickable" style="background:#fd7e14;" onclick="ouvrirModalAServir('CTN')" title="Cliquer pour voir les transferts à servir">
+            <div class="label">À servir <span class="counter-badge zero" id="kpi-ctn-count">0</span> <i class="bi bi-arrow-up-right-square kpi-hint"></i></div>
             <div class="value" id="kpi-ctn-reste">—</div>
           </div>
         </div>
@@ -2494,12 +2494,19 @@
 
   
 
-  /* ========== MODALE LISTE DES ENVOIS ========== */
-  async function ouvrirModalEnvois(agence) {
-    const store = agence === 'KIN' ? 'kin_ctn' : 'ctn_kin';
-    const agenceLabel = agence === 'KIN' ? 'Kinshasa (RDC)' : 'Cotonou (Bénin)';
+  
 
-    const items = (await dbGetAll(store)).filter(i => i.mois === moisActif);
+
+  /* ========== MODALE « À SERVIR » ========== */
+  async function ouvrirModalAServir(agence) {
+    // Agence qui reçoit = inverse de l'agence qui émet
+    // KIN reçoit depuis CTN (store 'ctn_kin')
+    // CTN reçoit depuis KIN (store 'kin_ctn')
+    const store = agence === 'KIN' ? 'ctn_kin' : 'kin_ctn';
+    const agenceLabel = agence === 'KIN' ? 'Kinshasa (RDC)' : 'Cotonou (Bénin)';
+    const agenceOrigine = agence === 'KIN' ? 'Cotonou' : 'Kinshasa';
+
+    const items = (await dbGetAll(store)).filter(i => i.mois === moisActif && (i.reste || 0) > 0);
     items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
     const [yyyy, mm] = moisActif.split('-');
@@ -2507,10 +2514,8 @@
     const moisFr = moisNom.charAt(0).toUpperCase() + moisNom.slice(1);
 
     document.getElementById('modal-envois-subtitle').textContent =
-      'Agence de ' + agenceLabel + ' — ' + moisFr;
+      'Transferts à servir à l\'agence de ' + agenceLabel + ' (émis depuis ' + agenceOrigine + ') — ' + moisFr;
 
-    const totRecu    = items.reduce((s, i) => s + (i.recu || 0), 0);
-    const totComm    = items.reduce((s, i) => s + (i.commission || 0), 0);
     const totAServir = items.reduce((s, i) => s + (i.aServir || 0), 0);
     const totServi   = items.reduce((s, i) => s + (i.servi || 0), 0);
     const totReste   = items.reduce((s, i) => s + (i.reste || 0), 0);
@@ -2518,59 +2523,48 @@
     let out = '';
     if (items.length === 0) {
       out = '<div class="text-center py-5 text-secondary">'
-          + '<i class="bi bi-inbox" style="font-size:3rem; opacity:.4;"></i>'
-          + '<p class="mt-3 mb-0">Aucun transfert émis ce mois.</p>'
+          + '<i class="bi bi-check2-circle" style="font-size:3rem; color:#198754; opacity:.6;"></i>'
+          + '<p class="mt-3 mb-0">Aucun transfert à servir. Tout est soldé ✅</p>'
           + '</div>';
     } else {
       out += '<table class="table table-sm table-hover align-middle mb-0">';
       out += '<thead class="table-light"><tr>';
       out += '<th>Date</th>';
-      out += '<th>Code</th>';
-      out += '<th>Expéditeur</th>';
+      out += '<th>Code secret</th>';
       out += '<th>Bénéficiaire</th>';
-      out += '<th class="text-end">Reçu</th>';
-      out += '<th class="text-end">Comm.</th>';
+      out += '<th>Expéditeur</th>';
       out += '<th class="text-end">À servir</th>';
-      out += '<th class="text-end">Servi</th>';
+      out += '<th class="text-end">Déjà servi</th>';
       out += '<th class="text-end">Reste</th>';
-      out += '<th class="text-center">Statut</th>';
+      out += '<th class="text-center">Action</th>';
       out += '</tr></thead><tbody>';
 
       items.forEach(i => {
-        const reste = i.reste || 0;
-        const servi = i.servi || 0;
-        const aServir = i.aServir || 0;
-        let statut, cls;
-        if (reste <= 0 && servi >= aServir) { statut = 'Soldé'; cls = 'bg-success'; }
-        else if (servi === 0) { statut = 'À servir'; cls = 'bg-warning text-dark'; }
-        else { statut = 'Partiel'; cls = 'bg-info text-dark'; }
-
         out += '<tr>';
         out += '<td class="text-nowrap"><small>' + (i.date || '—')
              + '<br><span class="text-secondary">' + (i.heure || '') + '</span></small></td>';
-        out += '<td><span class="badge bg-light text-dark font-monospace" style="font-size:0.68rem;">'
-             + (i.code || '—') + '</span></td>';
-        out += '<td><small>' + (i.expediteur || '—')
-             + '</small><br><small class="text-secondary">' + (i.telExp || '') + '</small></td>';
-        out += '<td><small>' + (i.beneficiaire || '—')
-             + '</small><br><small class="text-secondary">' + (i.telephone || '') + '</small></td>';
-        out += '<td class="text-end text-nowrap"><strong>' + fmt(i.recu) + '</strong></td>';
-        out += '<td class="text-end text-nowrap text-success">' + fmt(i.commission) + '</td>';
-        out += '<td class="text-end text-nowrap">' + fmt(aServir) + '</td>';
-        out += '<td class="text-end text-nowrap">' + fmt(servi) + '</td>';
-        out += '<td class="text-end text-nowrap ' + (reste > 0 ? 'text-danger fw-bold' : 'text-success')
-             + '">' + fmt(reste) + '</td>';
-        out += '<td class="text-center"><span class="badge ' + cls + '">' + statut + '</span></td>';
+        out += '<td><span class="badge bg-warning text-dark font-monospace" style="font-size:0.75rem; letter-spacing:1px;">'
+             + (i.codeSecret || '—') + '</span></td>';
+        out += '<td><strong>' + (i.beneficiaire || '—') + '</strong>'
+             + '<br><small class="text-secondary">' + (i.telephone || '') + '</small></td>';
+        out += '<td><small>' + (i.expediteur || '—') + '</small>'
+             + '<br><small class="text-secondary">' + (i.telExp || '') + '</small></td>';
+        out += '<td class="text-end text-nowrap">' + fmt(i.aServir) + '</td>';
+        out += '<td class="text-end text-nowrap text-success">' + fmt(i.servi || 0) + '</td>';
+        out += '<td class="text-end text-nowrap text-danger fw-bold">' + fmt(i.reste) + '</td>';
+        out += '<td class="text-center">'
+             + '<button class="btn btn-success btn-sm px-3" '
+             + 'onclick="fermerModalPuis(\'' + store + '\', ' + i.id + ')">'
+             + '<i class="bi bi-cash-coin"></i> Retrait'
+             + '</button></td>';
         out += '</tr>';
       });
 
       out += '</tbody>';
       out += '<tfoot class="table-light fw-bold"><tr>';
       out += '<td colspan="4" class="text-end">TOTAUX (' + items.length + ')</td>';
-      out += '<td class="text-end">' + fmt(totRecu) + '</td>';
-      out += '<td class="text-end text-success">' + fmt(totComm) + '</td>';
       out += '<td class="text-end">' + fmt(totAServir) + '</td>';
-      out += '<td class="text-end">' + fmt(totServi) + '</td>';
+      out += '<td class="text-end text-success">' + fmt(totServi) + '</td>';
       out += '<td class="text-end text-danger">' + fmt(totReste) + '</td>';
       out += '<td></td>';
       out += '</tr></tfoot>';
@@ -2579,10 +2573,17 @@
 
     document.getElementById('modal-envois-liste').innerHTML = out;
     document.getElementById('modal-envois-totaux').textContent =
-      items.length + ' transfert(s)  •  Reçu : ' + fmt(totRecu) + ' $  •  Reste à servir : ' + fmt(totReste) + ' $';
+      items.length + ' transfert(s) à servir  •  Total restant : ' + fmt(totReste) + ' $';
 
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalListeEnvois'));
     modal.show();
+  }
+
+  async function fermerModalPuis(store, id) {
+    const modalEl = document.getElementById('modalListeEnvois');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+    setTimeout(() => ouvrirRetraitDepuisCode(store, id), 400);
   }
 
   /* ========== SÉCURITÉ ÉCOUTEURS ========== */
