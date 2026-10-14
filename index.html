@@ -596,6 +596,79 @@
       </div>
     </section>
 
+    <!-- ============ PAGE COMPENSATIONS ============ -->
+    <section id="page-compensations" class="page">
+      <h2 class="h5 text-primary mb-3"><i class="bi bi-arrow-left-right"></i> Compensations inter-agences</h2>
+
+      <div class="alert alert-info small">
+        <i class="bi bi-info-circle"></i> Cette page permet de <strong>transférer</strong> le montant encaissé par l'agence émettrice vers l'agence qui doit payer le bénéficiaire. Compensations <strong>partielles multiples</strong> possibles.
+      </div>
+
+      <!-- KPIs : reste à compenser -->
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <div class="kpi-card" style="background:#0d6e5c;">
+            <div class="label">🇧🇯 CTN → 🇨🇩 KIN</div>
+            <div class="value" id="comp-reste-ctn-kin">—</div>
+            <div class="small" style="opacity:.85; font-size:.65rem;">Reste à compenser</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="kpi-card" style="background:#198754;">
+            <div class="label">🇨🇩 KIN → 🇧🇯 CTN</div>
+            <div class="value" id="comp-reste-kin-ctn">—</div>
+            <div class="small" style="opacity:.85; font-size:.65rem;">Reste à compenser</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulaire -->
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white fw-bold small"><i class="bi bi-plus-circle"></i> Nouvelle compensation</div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-12 col-md-4">
+              <label class="form-label small fw-bold mb-1">Sens *</label>
+              <select id="comp-sens" class="form-select form-select-sm">
+                <option value="">— Choisir —</option>
+                <option value="CTN_KIN">🇧🇯 Cotonou → 🇨🇩 Kinshasa</option>
+                <option value="KIN_CTN">🇨🇩 Kinshasa → 🇧🇯 Cotonou</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Date *</label>
+              <input type="date" id="comp-date" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Montant ($) *</label>
+              <input type="number" step="0.01" id="comp-montant" class="form-control form-control-sm">
+            </div>
+            <div class="col-12 col-md-2 d-flex align-items-end">
+              <button id="comp-ajouter" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-check-circle"></i> Compenser
+              </button>
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold mb-1">Observation</label>
+              <input type="text" id="comp-observation" class="form-control form-control-sm" placeholder="Ex : Compensation partielle #1/3">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Liste -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold small"><i class="bi bi-list-ul"></i> Historique du mois</span>
+          <span id="comp-totaux" class="badge bg-primary">—</span>
+        </div>
+        <div class="card-body p-0">
+          <div id="comp-liste" class="table-responsive"></div>
+        </div>
+      </div>
+    </section>
+
+
     <!-- ============ PAGE DÉPENSES ============ -->
     <section id="page-depenses" class="page">
       <h2 class="h5 text-primary mb-3"><i class="bi bi-cash-stack"></i> Dépenses</h2>
@@ -1031,54 +1104,19 @@
   }
 
 
-  /* ========== COMPENSATIONS INTER-AGENCES ========== */
-  async function creerCompensation(envoi, sourceStore, envoiId) {
-    // sourceStore = 'kin_ctn' → envoi émis à KIN, reçu à CTN → compensation KIN → CTN
-    // sourceStore = 'ctn_kin' → envoi émis à CTN, reçu à KIN → compensation CTN → KIN
-    const source = sourceStore === 'kin_ctn' ? 'KIN' : 'CTN';
-    const dest   = sourceStore === 'kin_ctn' ? 'CTN' : 'KIN';
-    const comp = {
-      mois: envoi.mois,
-      date: envoi.date,
-      heure: envoi.heure,
-      source: source,
-      dest: dest,
-      montant: envoi.recu || 0,
-      envoiId: envoiId,
-      envoiCode: envoi.code || '',
-      envoiStore: sourceStore,
-      auto: true,
-      observation: 'Compensation auto envoi ' + (envoi.code || '')
-    };
-    return await dbAdd('compensations', comp);
-  }
+  
 
-  async function supprimerCompensationPourEnvoi(envoiStore, envoiId) {
+  /* ========== NETTOYAGE UNIQUE DES COMPENSATIONS AUTO ========== */
+  async function nettoyerAutoCompensations() {
     try {
-      const comps = await dbGetAll('compensations');
-      const cibles = comps.filter(c => c.envoiStore === envoiStore && c.envoiId === envoiId);
-      for (const c of cibles) await dbDelete('compensations', c.id);
-      return cibles.length;
-    } catch (e) {
-      console.warn('supprimerCompensationPourEnvoi:', e);
-      return 0;
-    }
-  }
-
-  async function migrerCompensationsManquantes() {
-    try {
-      const done = await getConfig('compensations_migrated_v1');
+      const done = await getConfig('auto_compensations_cleaned_v1');
       if (done === true) return;
-      const kinCtn = await dbGetAll('kin_ctn');
-      const ctnKin = await dbGetAll('ctn_kin');
-      const comps  = await dbGetAll('compensations');
-      const existants = new Set(comps.map(c => c.envoiStore + '_' + c.envoiId));
-      let count = 0;
-      for (const e of kinCtn) if (!existants.has('kin_ctn_' + e.id)) { await creerCompensation(e, 'kin_ctn', e.id); count++; }
-      for (const e of ctnKin) if (!existants.has('ctn_kin_' + e.id)) { await creerCompensation(e, 'ctn_kin', e.id); count++; }
-      await setConfig('compensations_migrated_v1', true);
-      log('✅ Migration compensations : ' + count + ' créée(s)');
-    } catch (e) { console.warn('migrerCompensationsManquantes:', e); }
+      const comps = await dbGetAll('compensations');
+      const autos = comps.filter(c => c.auto === true);
+      for (const c of autos) await dbDelete('compensations', c.id);
+      await setConfig('auto_compensations_cleaned_v1', true);
+      if (autos.length > 0) log('🧹 ' + autos.length + ' compensation(s) auto supprimée(s)');
+    } catch (e) { console.warn('nettoyerAutoCompensations:', e); }
   }
 
   /* ========== SEED AGENTS PAR DÉFAUT ========== */
@@ -1197,6 +1235,7 @@
     if (nom === 'kin-ctn')    afficherKinCtn();
     if (nom === 'ctn-kin')    afficherCtnKin();
     if (nom === 'codes')      afficherCodes();
+    if (nom === 'compensations') afficherCompensations();
     if (nom === 'depenses')   afficherDepenses();
     if (nom === 'agents')     afficherAgents();
     if (nom === 'parametres') afficherParametres();
@@ -1798,6 +1837,7 @@
     log('➕ Agent ajouté : ' + nom);
     await afficherAgents();
     await chargerSelectAgents();
+    await nettoyerAutoCompensations();
   }
 
   async function basculerAgent(id) {
@@ -2237,8 +2277,7 @@
     };
     item.reste = item.aServir;
 
-    const envoiIdKin = await dbAdd('kin_ctn', item);
-    await creerCompensation(item, 'kin_ctn', envoiIdKin);
+    await dbAdd('kin_ctn', item);
     bootstrap.Modal.getInstance(document.getElementById('modalEnvoiKin')).hide();
     log('➕ Envoi KIN→CTN : ' + fmt(recu) + ' $');
 
@@ -2282,8 +2321,7 @@
     };
     item.reste = item.aServir;
 
-    const envoiIdCtn = await dbAdd('ctn_kin', item);
-    await creerCompensation(item, 'ctn_kin', envoiIdCtn);
+    await dbAdd('ctn_kin', item);
     bootstrap.Modal.getInstance(document.getElementById('modalEnvoiCtn')).hide();
     log('➕ Envoi CTN→KIN : ' + fmt(recu) + ' $');
 
@@ -2542,6 +2580,7 @@
     await afficherKinCtn();
     await afficherCtnKin();
     await afficherCodes();
+    await afficherCompensations();
     await afficherDepenses();
     await afficherAgents();
     await afficherParametres();
@@ -2651,6 +2690,122 @@
     setTimeout(() => ouvrirRetraitDepuisCode(store, id), 400);
   }
 
+
+  /* ========== PAGE COMPENSATIONS ========== */
+  async function calculerResteACompenser() {
+    const kinCtn = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
+    const ctnKin = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
+    const comps  = (await dbGetAll('compensations')).filter(c => c.mois === moisActif);
+
+    const totalCtnKin = ctnKin.reduce((s, i) => s + (i.recu || 0), 0);
+    const totalKinCtn = kinCtn.reduce((s, i) => s + (i.recu || 0), 0);
+
+    const compCtnKin = comps.filter(c => c.source === 'CTN' && c.dest === 'KIN')
+                            .reduce((s, c) => s + (c.montant || 0), 0);
+    const compKinCtn = comps.filter(c => c.source === 'KIN' && c.dest === 'CTN')
+                            .reduce((s, c) => s + (c.montant || 0), 0);
+
+    return {
+      resteCtnKin: Math.max(0, totalCtnKin - compCtnKin),
+      resteKinCtn: Math.max(0, totalKinCtn - compKinCtn),
+      totalCtnKin, totalKinCtn,
+      compCtnKin, compKinCtn
+    };
+  }
+
+  async function afficherCompensations() {
+    const r = await calculerResteACompenser();
+    const elCtn = document.getElementById('comp-reste-ctn-kin');
+    if (elCtn) elCtn.textContent = fmt(r.resteCtnKin) + ' $';
+    const elKin = document.getElementById('comp-reste-kin-ctn');
+    if (elKin) elKin.textContent = fmt(r.resteKinCtn) + ' $';
+
+    const comps = (await dbGetAll('compensations')).filter(c => c.mois === moisActif);
+    comps.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    const c = document.getElementById('comp-liste');
+    if (!c) return;
+
+    const totauxEl = document.getElementById('comp-totaux');
+
+    if (comps.length === 0) {
+      c.innerHTML = '<div class="p-3 text-secondary small">Aucune compensation enregistrée ce mois.</div>';
+      if (totauxEl) totauxEl.textContent = 'Total : 0 $';
+      return;
+    }
+
+    let html = '<table class="table table-sm table-tl mb-0"><thead><tr>';
+    html += '<th>Date</th><th>Sens</th><th>Montant</th><th>Observation</th><th></th>';
+    html += '</tr></thead><tbody>';
+
+    comps.forEach(x => {
+      const badge = x.source === 'CTN'
+        ? '<span class="badge bg-primary">🇧🇯 CTN → 🇨🇩 KIN</span>'
+        : '<span class="badge bg-success">🇨🇩 KIN → 🇧🇯 CTN</span>';
+      html += `<tr>
+        <td>${x.date || '—'}</td>
+        <td>${badge}</td>
+        <td><strong>${fmt(x.montant)}</strong></td>
+        <td style="text-align:left;"><small class="text-secondary">${x.observation || '—'}</small></td>
+        <td><button class="btn btn-sm btn-outline-danger" onclick="supprimerCompensation(${x.id})"><i class="bi bi-trash"></i></button></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    c.innerHTML = html;
+
+    if (totauxEl) {
+      totauxEl.textContent = 'Total : ' + fmt(r.compCtnKin + r.compKinCtn) + ' $  •  Reste : ' + fmt(r.resteCtnKin + r.resteKinCtn) + ' $';
+    }
+  }
+
+  async function ajouterCompensation() {
+    const sens = val('comp-sens');
+    const date = val('comp-date');
+    const montant = parseFloat(val('comp-montant')) || 0;
+    const observation = val('comp-observation') || '';
+
+    if (!sens) { alert('Choisissez le sens de la compensation.'); return; }
+    if (!date) { alert('La date est obligatoire.'); return; }
+    if (montant <= 0) { alert('Le montant doit être supérieur à 0.'); return; }
+
+    const [source, dest] = sens.split('_');
+
+    const r = await calculerResteACompenser();
+    const reste = source === 'CTN' ? r.resteCtnKin : r.resteKinCtn;
+    if (montant > reste + 0.01) {
+      alert('Montant supérieur au reste à compenser (' + fmt(reste) + ' $).');
+      return;
+    }
+
+    const item = {
+      mois: moisActif,
+      date, source, dest, montant, observation,
+      auto: false
+    };
+    await dbAdd('compensations', item);
+    log('➕ Compensation ' + source + ' → ' + dest + ' : ' + fmt(montant) + ' $');
+
+    resetForm(['comp-date', 'comp-montant', 'comp-observation']);
+    document.getElementById('comp-sens').value = '';
+
+    await afficherCompensations();
+    await afficherTbord();
+    await afficherKinCtn();
+    await afficherCtnKin();
+    await majCompteurs();
+  }
+
+  async function supprimerCompensation(id) {
+    if (!confirm('Supprimer cette compensation ?')) return;
+    await dbDelete('compensations', id);
+    log('🗑️ Compensation supprimée');
+    await afficherCompensations();
+    await afficherTbord();
+    await afficherKinCtn();
+    await afficherCtnKin();
+    await majCompteurs();
+  }
+
   /* ========== SÉCURITÉ ÉCOUTEURS ========== */
   function safeListen(id, event, handler) {
     const el = document.getElementById(id);
@@ -2668,7 +2823,6 @@
       await openDB();
     await initialiserAgents();
     await chargerSelectAgents();
-    await migrerCompensationsManquantes();
       log('✅ IndexedDB prêt');
       majBadge('✅ DB prête');
       diagStep('3. IndexedDB ouverte ✅');
@@ -2695,6 +2849,7 @@
     try {
       diagStep('7. Attachement des boutons...');
       document.getElementById('appro-ajouter').addEventListener('click', ajouterAppro);
+    if (document.getElementById('comp-ajouter')) document.getElementById('comp-ajouter').addEventListener('click', ajouterCompensation);
     if (document.getElementById('agent-ajouter'))
       document.getElementById('agent-ajouter').addEventListener('click', ajouterAgent);
       diagStep('  ✅ appro-ajouter');
