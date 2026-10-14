@@ -998,7 +998,7 @@
 
   /* ---------- BASE DE DONNÉES IndexedDB ---------- */
   const DB_NAME = 'transledger_v2';
-  const DB_VERSION = 3;  // v3 : ajout du store 'agents'
+  const DB_VERSION = 4;  // v4 : compensations inter-agences  // v3 : ajout du store 'agents'
   let db = null;
 
   function openDB() {
@@ -1006,7 +1006,7 @@
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = (event) => {
         const database = event.target.result;
-        const stores = ['appro', 'kin_ctn', 'ctn_kin', 'codes', 'depenses', 'louis', 'dorcas', 'config', 'retraits', 'agents'];
+        const stores = ['appro', 'kin_ctn', 'ctn_kin', 'codes', 'depenses', 'louis', 'dorcas', 'config', 'retraits', 'agents', 'compensations'];
         stores.forEach(name => {
           if (!database.objectStoreNames.contains(name)) {
             database.createObjectStore(name, { keyPath: 'id', autoIncrement: true });
@@ -1028,6 +1028,57 @@
     const actifs = agents.filter(a => a.actif !== false);
     sel.innerHTML = '<option value="">— Choisir un agent —</option>' +
       actifs.map(a => `<option value="${a.nom}">${a.nom}</option>`).join('');
+  }
+
+
+  /* ========== COMPENSATIONS INTER-AGENCES ========== */
+  async function creerCompensation(envoi, sourceStore, envoiId) {
+    // sourceStore = 'kin_ctn' → envoi émis à KIN, reçu à CTN → compensation KIN → CTN
+    // sourceStore = 'ctn_kin' → envoi émis à CTN, reçu à KIN → compensation CTN → KIN
+    const source = sourceStore === 'kin_ctn' ? 'KIN' : 'CTN';
+    const dest   = sourceStore === 'kin_ctn' ? 'CTN' : 'KIN';
+    const comp = {
+      mois: envoi.mois,
+      date: envoi.date,
+      heure: envoi.heure,
+      source: source,
+      dest: dest,
+      montant: envoi.recu || 0,
+      envoiId: envoiId,
+      envoiCode: envoi.code || '',
+      envoiStore: sourceStore,
+      auto: true,
+      observation: 'Compensation auto envoi ' + (envoi.code || '')
+    };
+    return await dbAdd('compensations', comp);
+  }
+
+  async function supprimerCompensationPourEnvoi(envoiStore, envoiId) {
+    try {
+      const comps = await dbGetAll('compensations');
+      const cibles = comps.filter(c => c.envoiStore === envoiStore && c.envoiId === envoiId);
+      for (const c of cibles) await dbDelete('compensations', c.id);
+      return cibles.length;
+    } catch (e) {
+      console.warn('supprimerCompensationPourEnvoi:', e);
+      return 0;
+    }
+  }
+
+  async function migrerCompensationsManquantes() {
+    try {
+      const done = await getConfig('compensations_migrated_v1');
+      if (done === true) return;
+      const kinCtn = await dbGetAll('kin_ctn');
+      const ctnKin = await dbGetAll('ctn_kin');
+      const comps  = await dbGetAll('compensations');
+      const existants = new Set(comps.map(c => c.envoiStore + '_' + c.envoiId));
+      let count = 0;
+      for (const e of kinCtn) if (!existants.has('kin_ctn_' + e.id)) { await creerCompensation(e, 'kin_ctn', e.id); count++; }
+      for (const e of ctnKin) if (!existants.has('ctn_kin_' + e.id)) { await creerCompensation(e, 'ctn_kin', e.id); count++; }
+      await setConfig('compensations_migrated_v1', true);
+      log('✅ Migration compensations : ' + count + ' créée(s)');
+    } catch (e) { console.warn('migrerCompensationsManquantes:', e); }
   }
 
   /* ========== SEED AGENTS PAR DÉFAUT ========== */
@@ -1300,6 +1351,11 @@
     const kinCtn = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
     const ctnKin = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
     const dep    = (await dbGetAll('depenses')).filter(i => i.mois === moisActif);
+    const comps  = (await dbGetAll('compensations')).filter(c => c.mois === moisActif);
+
+    // Compensations reçues (entrées) et envoyées (sorties) par cette agence
+    const compRecues   = comps.filter(c => c.dest === agence).reduce((s, c) => s + (c.montant || 0), 0);
+    const compEnvoyees = comps.filter(c => c.source === agence).reduce((s, c) => s + (c.montant || 0), 0);
 
     let solde;
     if (agence === 'CTN') {
@@ -1307,12 +1363,12 @@
       const servi = kinCtn.reduce((s, i) => s + (i.servi || 0), 0);
       const depCTN   = dep.filter(i => i.ville === 'CTN').reduce((s, i) => s + (i.montant || 0), 0);
       const depAutre = dep.filter(i => i.ville === 'AUTRE').reduce((s, i) => s + (i.montant || 0), 0);
-      solde = init + totAppro + totApproLegacy + recu - servi - depCTN - depAutre;
+      solde = init + totAppro + totApproLegacy + recu - servi - depCTN - depAutre + compRecues - compEnvoyees;
     } else {
       const recu  = kinCtn.reduce((s, i) => s + (i.recu || 0), 0);
       const servi = ctnKin.reduce((s, i) => s + (i.servi || 0), 0);
       const depKIN = dep.filter(i => i.ville === 'KIN').reduce((s, i) => s + (i.montant || 0), 0);
-      solde = init + totAppro + recu - servi - depKIN;
+      solde = init + totAppro + recu - servi - depKIN + compRecues - compEnvoyees;
     }
     return solde;
   }
@@ -1959,13 +2015,20 @@
     const soldeInitialKIN = (await getConfig('solde_initial_kin_' + moisActif)) || 0;
 
     // Calcul CTN
-    const entreesCTN = soldeInitialCTN + totApproCTN + totApproLegacy + totCtnKinRecu;
-    const sortiesCTN = totKinCtnServi + totDepCTN + totDepAutre;
+    const comps = (await dbGetAll('compensations')).filter(c => c.mois === moisActif);
+    const compRecuesCTN   = comps.filter(c => c.dest === 'CTN').reduce((s, c) => s + (c.montant || 0), 0);
+    const compEnvoyeesCTN = comps.filter(c => c.source === 'CTN').reduce((s, c) => s + (c.montant || 0), 0);
+    const compRecuesKIN   = comps.filter(c => c.dest === 'KIN').reduce((s, c) => s + (c.montant || 0), 0);
+    const compEnvoyeesKIN = comps.filter(c => c.source === 'KIN').reduce((s, c) => s + (c.montant || 0), 0);
+
+    const entreesCTN = soldeInitialCTN + totApproCTN + totApproLegacy + totCtnKinRecu + compRecuesCTN;
+    const sortiesCTN_comp = compEnvoyeesCTN;
+    const sortiesCTN = totKinCtnServi + totDepCTN + totDepAutre + sortiesCTN_comp;
     const soldeCTN = entreesCTN - sortiesCTN;
 
     // Calcul KIN
-    const entreesKIN = soldeInitialKIN + totApproKIN + totKinCtnRecu + totCodesReste;
-    const sortiesKIN = totCtnKinServi + totDepKIN;  // fix: paiements CTN retirés
+    const entreesKIN = soldeInitialKIN + totApproKIN + totKinCtnRecu + totCodesReste + compRecuesKIN;
+    const sortiesKIN = totCtnKinServi + totDepKIN + compEnvoyeesKIN;  // fix: paiements CTN retirés
     const soldeKIN = entreesKIN - sortiesKIN;
 
     return {
@@ -2174,7 +2237,8 @@
     };
     item.reste = item.aServir;
 
-    await dbAdd('kin_ctn', item);
+    const envoiIdKin = await dbAdd('kin_ctn', item);
+    await creerCompensation(item, 'kin_ctn', envoiIdKin);
     bootstrap.Modal.getInstance(document.getElementById('modalEnvoiKin')).hide();
     log('➕ Envoi KIN→CTN : ' + fmt(recu) + ' $');
 
@@ -2218,7 +2282,8 @@
     };
     item.reste = item.aServir;
 
-    await dbAdd('ctn_kin', item);
+    const envoiIdCtn = await dbAdd('ctn_kin', item);
+    await creerCompensation(item, 'ctn_kin', envoiIdCtn);
     bootstrap.Modal.getInstance(document.getElementById('modalEnvoiCtn')).hide();
     log('➕ Envoi CTN→KIN : ' + fmt(recu) + ' $');
 
@@ -2603,6 +2668,7 @@
       await openDB();
     await initialiserAgents();
     await chargerSelectAgents();
+    await migrerCompensationsManquantes();
       log('✅ IndexedDB prêt');
       majBadge('✅ DB prête');
       diagStep('3. IndexedDB ouverte ✅');
