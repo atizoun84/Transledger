@@ -393,6 +393,14 @@
     <!-- ============ PAGE AGENCE KINSHASA (RDC) ============ -->
     <section id="page-kin-ctn" class="page">
       <h2 class="h5 text-primary mb-3"><i class="bi bi-geo-alt-fill"></i> Agence Kinshasa (RDC)</h2>
+      <div class="card shadow-sm mb-3" style="background:linear-gradient(135deg,#0d6e5c,#0a5244); color:#fff; border:none;">
+        <div class="card-body py-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="small"><i class="bi bi-safe"></i> Solde réel en caisse</span>
+            <span class="h5 mb-0 fw-bold" id="solde-caisse-kin">—</span>
+          </div>
+        </div>
+      </div>
 
       <div class="row g-2 mb-3">
         <div class="col-4">
@@ -450,6 +458,14 @@
     <!-- ============ PAGE AGENCE COTONOU (BÉNIN) ============ -->
     <section id="page-ctn-kin" class="page">
       <h2 class="h5 text-primary mb-3"><i class="bi bi-geo-alt-fill"></i> Agence Cotonou (Bénin)</h2>
+      <div class="card shadow-sm mb-3" style="background:linear-gradient(135deg,#0d6e5c,#0a5244); color:#fff; border:none;">
+        <div class="card-body py-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="small"><i class="bi bi-safe"></i> Solde réel en caisse</span>
+            <span class="h5 mb-0 fw-bold" id="solde-caisse-ctn">—</span>
+          </div>
+        </div>
+      </div>
 
       <!-- KPIs -->
       <div class="row g-2 mb-3">
@@ -1263,7 +1279,45 @@
   /* ========== PAGE KIN → CTN ========== */
   
 
+
+  /* ========== SOLDE RÉEL EN CAISSE PAR AGENCE ========== */
+  async function calculerSoldeCaisse(agence) {
+    const init = Number(await getConfig('solde_initial_' + agence.toLowerCase() + '_' + moisActif)) || 0;
+
+    const appros = (await dbGetAll('appro')).filter(i => i.mois === moisActif);
+    const totAppro = appros.filter(i => i.agence === agence).reduce((s, i) => s + (i.montant || 0), 0);
+    const totApproLegacy = appros.filter(i => !i.agence).reduce((s, i) => s + (i.fondsKin || 0) + (i.fondsDivine || 0), 0);
+
+    const kinCtn = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
+    const ctnKin = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
+    const dep    = (await dbGetAll('depenses')).filter(i => i.mois === moisActif);
+
+    let solde;
+    if (agence === 'CTN') {
+      const recu  = ctnKin.reduce((s, i) => s + (i.recu || 0), 0);
+      const servi = kinCtn.reduce((s, i) => s + (i.servi || 0), 0);
+      const depCTN   = dep.filter(i => i.ville === 'CTN').reduce((s, i) => s + (i.montant || 0), 0);
+      const depAutre = dep.filter(i => i.ville === 'AUTRE').reduce((s, i) => s + (i.montant || 0), 0);
+      solde = init + totAppro + totApproLegacy + recu - servi - depCTN - depAutre;
+    } else {
+      const recu  = kinCtn.reduce((s, i) => s + (i.recu || 0), 0);
+      const servi = ctnKin.reduce((s, i) => s + (i.servi || 0), 0);
+      const depKIN = dep.filter(i => i.ville === 'KIN').reduce((s, i) => s + (i.montant || 0), 0);
+      solde = init + totAppro + recu - servi - depKIN;
+    }
+    return solde;
+  }
+
+  async function afficherSoldeCaisse(agence) {
+    const el = document.getElementById('solde-caisse-' + agence.toLowerCase());
+    if (!el) return;
+    const s = await calculerSoldeCaisse(agence);
+    el.textContent = fmt(s) + ' $';
+    el.style.color = s < 0 ? '#ffb3b3' : '#fff';
+  }
+
   async function afficherKinCtn() {
+    await afficherSoldeCaisse('KIN');
     const envois = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
     const tousRetraits = (await dbGetAll('retraits')).filter(r => r.mois === moisActif);
     const retraits = tousRetraits.filter(r => r.sourceStore === 'kin_ctn');
@@ -1337,6 +1391,7 @@
   
 
   async function afficherCtnKin() {
+    await afficherSoldeCaisse('CTN');
     // Les envois CTN→KIN = opérations de l'agence Cotonou
     const envois = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
     // Les retraits effectués à Cotonou = retraits enregistrés avec sourceStore 'kin_ctn'
@@ -1901,7 +1956,7 @@
 
     // Calcul KIN
     const entreesKIN = soldeInitialKIN + totApproKIN + totKinCtnRecu + totCodesReste;
-    const sortiesKIN = totCtnKinServi + totKinCtnServi + totDepKIN;
+    const sortiesKIN = totCtnKinServi + totDepKIN;  // fix: paiements CTN retirés
     const soldeKIN = entreesKIN - sortiesKIN;
 
     return {
