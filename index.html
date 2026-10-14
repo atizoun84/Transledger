@@ -422,6 +422,12 @@
                 <div class="fw-bold" id="compta-ctn-solde">—</div>
               </div>
             </div>
+            <div class="col-12 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-secondary">💸 Dépenses</div>
+                <div class="fw-bold text-danger" id="compta-ctn-depenses">—</div>
+              </div>
+            </div>
           </div>
           <button class="btn btn-outline-primary btn-sm w-100" onclick="changerPage('ctn-kin')">
             <i class="bi bi-box-arrow-up-right"></i> Ouvrir la page complète Cotonou
@@ -461,6 +467,12 @@
               <div class="border rounded p-2 text-center">
                 <div class="small text-secondary">Solde caisse</div>
                 <div class="fw-bold" id="compta-kin-solde">—</div>
+              </div>
+            </div>
+            <div class="col-12 col-md-3">
+              <div class="border rounded p-2 text-center">
+                <div class="small text-secondary">💸 Dépenses</div>
+                <div class="fw-bold text-danger" id="compta-kin-depenses">—</div>
               </div>
             </div>
           </div>
@@ -587,6 +599,7 @@
         <button type="button" class="btn btn-outline-primary filtre-kin active" data-filtre="tous">Tous</button>
         <button type="button" class="btn btn-outline-primary filtre-kin" data-filtre="envois">📤 Envois</button>
         <button type="button" class="btn btn-outline-primary filtre-kin" data-filtre="retraits">📥 Retraits</button>
+        <button type="button" class="btn btn-outline-primary filtre-kin" data-filtre="depenses">💸 Dépenses</button>
       </div>
 
       <div class="card shadow-sm">
@@ -657,6 +670,7 @@
         <button type="button" class="btn btn-outline-primary filtre-ctn active" data-filtre="tous">Tous</button>
         <button type="button" class="btn btn-outline-primary filtre-ctn" data-filtre="envois">📤 Envois</button>
         <button type="button" class="btn btn-outline-primary filtre-ctn" data-filtre="retraits">📥 Retraits</button>
+        <button type="button" class="btn btn-outline-primary filtre-ctn" data-filtre="depenses">💸 Dépenses</button>
       </div>
 
       <div class="card shadow-sm">
@@ -1565,12 +1579,18 @@
     const c = document.getElementById('kc-liste');
     if (!c) return;
 
+    // Dépenses de Kinshasa
+    const depensesKin = (await dbGetAll('depenses')).filter(d => d.mois === moisActif && d.ville === 'KIN');
+
     let operations = [];
     if (filtreKin === 'tous' || filtreKin === 'envois') {
       envois.forEach(e => operations.push({ type: 'envoi', date: e.date, data: e }));
     }
     if (filtreKin === 'tous' || filtreKin === 'retraits') {
       retraits.forEach(r => operations.push({ type: 'retrait', date: r.date, data: r }));
+    }
+    if (filtreKin === 'tous' || filtreKin === 'depenses') {
+      depensesKin.forEach(d => operations.push({ type: 'depense', date: d.date, data: d }));
     }
 
     if (operations.length === 0) {
@@ -1603,6 +1623,30 @@
             <button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('kin_ctn',${e.id})"><i class="bi bi-pencil"></i></button>
             <button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('kin_ctn',${e.id})"><i class="bi bi-trash"></i></button>
           </td>
+        </tr>`;
+      } else if (op.type === 'depense') {
+        const d = op.data;
+        html += `<tr style="background:#fff5f5;">
+          <td><span class="badge bg-danger"><i class="bi bi-cash-stack"></i> Dépense</span></td>
+          <td>${d.date || ''}</td>
+          <td>—</td>
+          <td>—</td>
+          <td style="text-align:left;">${d.libelle || d.description || '—'}</td>
+          <td><strong class="text-danger">${fmt(d.montant)}</strong></td>
+          <td><small class="text-secondary">${d.observation || ''}</small></td>
+          <td></td>
+        </tr>`;
+      } else if (op.type === 'depense') {
+        const d = op.data;
+        html += `<tr style="background:#fff5f5;">
+          <td><span class="badge bg-danger"><i class="bi bi-cash-stack"></i> Dépense</span></td>
+          <td>${d.date || ''}</td>
+          <td>—</td>
+          <td>—</td>
+          <td style="text-align:left;">${d.libelle || d.description || '—'}</td>
+          <td><strong class="text-danger">${fmt(d.montant)}</strong></td>
+          <td><small class="text-secondary">${d.observation || ''}</small></td>
+          <td></td>
         </tr>`;
       } else {
         const r = op.data;
@@ -1641,12 +1685,18 @@
     const c = document.getElementById('ck-liste');
     if (!c) return;
 
+    // Dépenses de Cotonou (+ AUTRE si applicable)
+    const depensesCtn = (await dbGetAll('depenses')).filter(d => d.mois === moisActif && (d.ville === 'CTN' || d.ville === 'AUTRE'));
+
     let operations = [];
     if (filtreCtn === 'tous' || filtreCtn === 'envois') {
       envois.forEach(e => operations.push({ type: 'envoi', date: e.date, data: e }));
     }
     if (filtreCtn === 'tous' || filtreCtn === 'retraits') {
       retraits.forEach(r => operations.push({ type: 'retrait', date: r.date, data: r }));
+    }
+    if (filtreCtn === 'tous' || filtreCtn === 'depenses') {
+      depensesCtn.forEach(d => operations.push({ type: 'depense', date: d.date, data: d }));
     }
 
     if (operations.length === 0) {
@@ -3064,7 +3114,7 @@
       { label: '🔑 Codes en attente',  c: ctn.nbCodes,        k: kin.nbCodes,        ecart: false },
       { label: '🔄 Comp. reçues',      c: ctn.compRecues,     k: kin.compRecues,     ecart: true },
       { label: '↗️ Comp. envoyées',    c: ctn.compEnvoyees,   k: kin.compEnvoyees,   ecart: true },
-      { label: '💸 Dépenses',          c: ctn.depVille,       k: kin.depVille,       ecart: true }
+      { label: '💸 Dépenses',          c: ctn.depVille,       k: kin.depVille,       ecart: true, danger: true }
     ];
 
     let out = '';
@@ -3077,7 +3127,8 @@
         const cls = d > 0 ? 'text-success' : (d < 0 ? 'text-danger' : 'text-secondary');
         ecartCell = `<span class="${cls}">${d >= 0 ? '+' : ''}${fmt(d)} $</span>`;
       }
-      out += `<tr>
+      const rowCls = l.danger ? 'fw-bold text-danger' : '';
+      out += `<tr class="${rowCls}">
         <td class="small">${l.label}</td>
         <td class="text-end fw-bold">${fmtC}</td>
         <td class="text-end fw-bold">${fmtK}</td>
@@ -3092,12 +3143,14 @@
     set('compta-ctn-retraits',  fmt(ctn.totServi) + ' $');
     set('compta-ctn-reste',     fmt(ctn.totReste) + ' $');
     set('compta-ctn-solde',     fmt(ctn.solde) + ' $');
+    set('compta-ctn-depenses',  fmt(ctn.depVille) + ' $');
 
     // Détails KIN
     set('compta-kin-envois',    fmt(kin.totEnvois) + ' $');
     set('compta-kin-retraits',  fmt(kin.totServi) + ' $');
     set('compta-kin-reste',     fmt(kin.totReste) + ' $');
     set('compta-kin-solde',     fmt(kin.solde) + ' $');
+    set('compta-kin-depenses',  fmt(kin.depVille) + ' $');
   }
 
   /* ========== SÉCURITÉ ÉCOUTEURS ========== */
