@@ -1099,7 +1099,7 @@
 
   /* ---------- BASE DE DONNÉES IndexedDB ---------- */
   const DB_NAME = 'transledger_v2';
-  const DB_VERSION = 2;
+  const DB_VERSION = 3;  // v3 : ajout du store 'agents'
   let db = null;
 
   function openDB() {
@@ -1107,7 +1107,7 @@
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = (event) => {
         const database = event.target.result;
-        const stores = ['appro', 'kin_ctn', 'ctn_kin', 'codes', 'depenses', 'louis', 'dorcas', 'config', 'retraits'];
+        const stores = ['appro', 'kin_ctn', 'ctn_kin', 'codes', 'depenses', 'louis', 'dorcas', 'config', 'retraits', 'agents'];
         stores.forEach(name => {
           if (!database.objectStoreNames.contains(name)) {
             database.createObjectStore(name, { keyPath: 'id', autoIncrement: true });
@@ -1117,6 +1117,21 @@
       req.onsuccess = () => { db = req.result; resolve(db); };
       req.onerror = () => reject(req.error);
     });
+  }
+
+
+  /* ========== SEED AGENTS PAR DÉFAUT ========== */
+  async function initialiserAgents() {
+    try {
+      const existants = await dbGetAll('agents');
+      if (existants.length === 0) {
+        await dbAdd('agents', { nom: 'Louis', actif: true });
+        await dbAdd('agents', { nom: 'Dorcas', actif: true });
+        log('👥 Agents par défaut créés : Louis, Dorcas');
+      }
+    } catch (e) {
+      console.warn('initAgents:', e);
+    }
   }
 
   function dbAdd(store, item) {
@@ -2527,6 +2542,7 @@
     try {
       diagStep('2. Ouverture IndexedDB...');
       await openDB();
+    await initialiserAgents();
       log('✅ IndexedDB prêt');
       majBadge('✅ DB prête');
       diagStep('3. IndexedDB ouverte ✅');
