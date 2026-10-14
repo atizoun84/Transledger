@@ -1234,7 +1234,7 @@
     const envois = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
     // Les retraits effectués à Cotonou = retraits enregistrés avec sourceStore 'kin_ctn'
     const tousRetraits = (await dbGetAll('retraits')).filter(r => r.mois === moisActif);
-    const retraits = tousRetraits.filter(r => r.sourceStore === 'kin_ctn');
+    const retraits = tousRetraits.filter(r => r.sourceStore === 'ctn_kin');
 
     const c = document.getElementById('ck-liste');
     if (!c) return;
@@ -2351,8 +2351,6 @@
     if (document.getElementById('agent-ajouter'))
       document.getElementById('agent-ajouter').addEventListener('click', ajouterAgent);
       diagStep('  ✅ appro-ajouter');
-      diagStep('  ✅ kc-ajouter');
-      diagStep('  ✅ ck-ajouter');
       initFiltresCodes();
       diagStep('  ✅ initFiltresCodes');
       initFiltresAgences();
