@@ -3,7 +3,7 @@
 /* Auteur : Atizoun                             */
 /* ============================================ */
 
-const CACHE_NAME = 'transledger-v32';
+const CACHE_NAME = 'transledger-v33';
 const FILES_TO_CACHE = [
   './',
   './index.html',
