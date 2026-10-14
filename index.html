@@ -1329,7 +1329,7 @@
     await afficherSoldeCaisse('KIN');
     const envois = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
     const tousRetraits = (await dbGetAll('retraits')).filter(r => r.mois === moisActif);
-    const retraits = tousRetraits.filter(r => r.sourceStore === 'kin_ctn');
+    const retraits = tousRetraits.filter(r => r.sourceStore === 'ctn_kin');
 
     const c = document.getElementById('kc-liste');
     if (!c) return;
@@ -1405,7 +1405,7 @@
     const envois = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
     // Les retraits effectués à Cotonou = retraits enregistrés avec sourceStore 'kin_ctn'
     const tousRetraits = (await dbGetAll('retraits')).filter(r => r.mois === moisActif);
-    const retraits = tousRetraits.filter(r => r.sourceStore === 'ctn_kin');
+    const retraits = tousRetraits.filter(r => r.sourceStore === 'kin_ctn');
 
     const c = document.getElementById('ck-liste');
     if (!c) return;
