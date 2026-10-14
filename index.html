@@ -342,6 +342,25 @@
     <section id="page-compta" class="page">
       <h2 class="h5 text-primary mb-3"><i class="bi bi-calculator"></i> Comptabilité &amp; Analyse</h2>
 
+      <!-- ========== FILTRE DE PÉRIODE ========== -->
+      <div class="card shadow-sm mb-3" style="border-left:4px solid #0d6e5c;">
+        <div class="card-body py-2">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <label class="form-label small fw-bold mb-0 text-nowrap">
+              <i class="bi bi-funnel-fill text-primary"></i> Période :
+            </label>
+            <select id="compta-periode" class="form-select form-select-sm" style="width:auto; min-width:160px;">
+              <option value="jour">📅 Aujourd'hui</option>
+              <option value="semaine">🗓️ Cette semaine</option>
+              <option value="mois">📆 Ce mois</option>
+              <option value="annee">📊 Cette année</option>
+            </select>
+            <small id="compta-periode-info" class="text-secondary fst-italic">—</small>
+          </div>
+        </div>
+      </div>
+
+
       <!-- ========== SYNTHÈSE COMPARATIVE ========== -->
       <div class="card shadow-sm mb-3">
         <div class="card-header border-0" style="background:linear-gradient(135deg,#0d6e5c 0%,#0a5244 100%); color:#fff;">
@@ -2925,12 +2944,73 @@
   }
 
 
+
+  /* ========== FILTRE TEMPOREL ========== */
+  function getPeriodeActive() {
+    const el = document.getElementById('compta-periode');
+    return el ? el.value : 'jour';
+  }
+
+  function filtrerParPeriode(items, periode) {
+    if (periode === 'jour') {
+      const today = new Date().toISOString().split('T')[0];
+      return items.filter(i => i.date === today);
+    }
+    if (periode === 'semaine') {
+      const now = new Date();
+      const day = now.getDay();
+      const diffLundi = (day === 0 ? -6 : 1 - day);
+      const lundi = new Date(now);
+      lundi.setDate(now.getDate() + diffLundi);
+      const dimanche = new Date(lundi);
+      dimanche.setDate(lundi.getDate() + 6);
+      const l = lundi.toISOString().split('T')[0];
+      const d = dimanche.toISOString().split('T')[0];
+      return items.filter(i => (i.date || '') >= l && (i.date || '') <= d);
+    }
+    if (periode === 'mois') {
+      return items.filter(i => i.mois === moisActif);
+    }
+    if (periode === 'annee') {
+      const annee = (moisActif || '').split('-')[0] || new Date().getFullYear().toString();
+      return items.filter(i => (i.mois || '').startsWith(annee));
+    }
+    return items;
+  }
+
+  function libellePeriode(periode) {
+    const fmtDate = (d) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    if (periode === 'jour') {
+      return '📅 ' + fmtDate(new Date());
+    }
+    if (periode === 'semaine') {
+      const now = new Date();
+      const day = now.getDay();
+      const diffLundi = (day === 0 ? -6 : 1 - day);
+      const lundi = new Date(now); lundi.setDate(now.getDate() + diffLundi);
+      const dimanche = new Date(lundi); dimanche.setDate(lundi.getDate() + 6);
+      return '🗓️ ' + fmtDate(lundi) + ' → ' + fmtDate(dimanche);
+    }
+    if (periode === 'mois') {
+      const [yyyy, mm] = (moisActif || '').split('-');
+      const nom = new Date(yyyy, parseInt(mm || 1) - 1, 1)
+        .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+      return '📆 ' + nom.charAt(0).toUpperCase() + nom.slice(1);
+    }
+    if (periode === 'annee') {
+      const annee = (moisActif || '').split('-')[0] || new Date().getFullYear();
+      return '📊 Année ' + annee;
+    }
+    return '—';
+  }
+
   /* ========== PAGE COMPTABILITÉ — STATS PAR AGENCE ========== */
-  async function calculerStatsAgence(agence) {
-    const kinCtn = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
-    const ctnKin = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
-    const comps  = (await dbGetAll('compensations')).filter(c => c.mois === moisActif);
-    const dep    = (await dbGetAll('depenses')).filter(i => i.mois === moisActif);
+  async function calculerStatsAgence(agence, periode) {
+    periode = periode || getPeriodeActive();
+    const kinCtn = filtrerParPeriode(await dbGetAll('kin_ctn'), periode);
+    const ctnKin = filtrerParPeriode(await dbGetAll('ctn_kin'), periode);
+    const comps  = filtrerParPeriode(await dbGetAll('compensations'), periode);
+    const dep    = filtrerParPeriode(await dbGetAll('depenses'), periode);
 
     // Envois ÉMIS par cette agence
     const envois = agence === 'CTN' ? ctnKin : kinCtn;
@@ -2955,17 +3035,22 @@
   }
 
   async function afficherComptabilite() {
-    const ctn = await calculerStatsAgence('CTN');
-    const kin = await calculerStatsAgence('KIN');
+    const periode = getPeriodeActive();
+    const ctn = await calculerStatsAgence('CTN', periode);
+    const kin = await calculerStatsAgence('KIN', periode);
 
-    // Label du mois
+    // Label de la période (mois / année selon le filtre)
     const moisEl = document.getElementById('compta-mois-label');
-    if (moisEl && moisActif) {
-      const [yyyy, mm] = moisActif.split('-');
-      const nom = new Date(yyyy, parseInt(mm) - 1, 1)
-        .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-      moisEl.textContent = nom.charAt(0).toUpperCase() + nom.slice(1);
-    }
+    const libelle = libellePeriode(periode);
+    if (moisEl) moisEl.textContent = libelle;
+
+    // Info détaillée sous le sélecteur
+    const infoEl = document.getElementById('compta-periode-info');
+    if (infoEl) infoEl.textContent = libelle;
+
+    // Restaurer la valeur du select
+    const selEl = document.getElementById('compta-periode');
+    if (selEl && selEl.value !== periode) selEl.value = periode;
 
     // Tableau synthèse
     const tbody = document.getElementById('compta-tbody');
@@ -3030,6 +3115,11 @@
     try {
       diagStep('2. Ouverture IndexedDB...');
       await openDB();
+
+      // Période par défaut : jour courant
+      const compSelInit = document.getElementById('compta-periode');
+      if (compSelInit && !compSelInit.value) compSelInit.value = 'jour';
+
     await initialiserAgents();
     await chargerSelectAgents();
       log('✅ IndexedDB prêt');
@@ -3058,6 +3148,14 @@
     try {
       diagStep('7. Attachement des boutons...');
       document.getElementById('appro-ajouter').addEventListener('click', ajouterAppro);
+      // Listener filtre période Comptabilité
+      const compSel = document.getElementById('compta-periode');
+      if (compSel) {
+        compSel.addEventListener('change', () => {
+          afficherComptabilite();
+        });
+      }
+
     if (document.getElementById('comp-ajouter')) document.getElementById('comp-ajouter').addEventListener('click', ajouterCompensation);
     if (document.getElementById('agent-ajouter'))
       document.getElementById('agent-ajouter').addEventListener('click', ajouterAgent);
