@@ -330,155 +330,7 @@
     <section id="page-appro" class="page">
       <h2 class="h5 text-primary mb-3"><i class="bi bi-wallet2"></i> Approvisionnement</h2>
 
-            <div class="card shadow-sm mb-3">
-        <div class="card-body">
-          <div class="row g-2 mb-2">
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Date *</label>
-              <input type="date" id="appro-date" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-5">
-              <label class="form-label small fw-bold mb-1">Agence à approvisionner *</label>
-              <div class="d-flex gap-2">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="appro-agence" id="appro-agence-ctn" value="CTN">
-                  <label class="form-check-label small" for="appro-agence-ctn">🇧🇯 Cotonou</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="appro-agence" id="appro-agence-kin" value="KIN">
-                  <label class="form-check-label small" for="appro-agence-kin">🇨🇩 Kinshasa</label>
-                </div>
-              </div>
-            </div>
-            <div class="col-6 col-md-4">
-              <label class="form-label small fw-bold mb-1">Montant ($) *</label>
-              <input type="number" step="0.01" id="appro-montant" class="form-control form-control-sm">
-            </div>
-          </div>
-          <div class="row g-2">
-            <div class="col-12 col-md-6">
-              <label class="form-label small fw-bold mb-1">Agent apporteur *</label>
-              <select id="appro-agent" class="form-select form-select-sm">
-                <option value="">— Choisir un agent —</option>
-              </select>
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="form-label small fw-bold mb-1">Libellé</label>
-              <input type="text" id="appro-libelle" class="form-control form-control-sm" placeholder="Ex : Apport caisse KIN">
-            </div>
-            <div class="col-12">
-              <label class="form-label small fw-bold mb-1">Observation</label>
-              <textarea id="appro-observation" class="form-control form-control-sm" rows="2" placeholder="Notes libres…"></textarea>
-            </div>
-            <div class="col-12 d-flex justify-content-end">
-              <button id="appro-ajouter" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-circle"></i> Enregistrer l'approvisionnement
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card shadow-sm">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-          <span class="fw-bold small"><i class="bi bi-list-ul"></i> Transactions du mois</span>
-          <span id="appro-total" class="badge bg-primary">Total : 0.00 $</span>
-        </div>
-        <div class="card-body p-0">
-          <div id="appro-liste" class="table-responsive"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ PAGE AGENCE KINSHASA (RDC) ============ -->
-    <section id="page-kin-ctn" class="page">
-      <h2 class="h5 text-primary mb-3"><i class="bi bi-geo-alt-fill"></i> Agence Kinshasa (RDC)</h2>
-
-      <!-- KPIs -->
-      <div class="row g-2 mb-3">
-        <div class="col-4">
-          <div class="kpi-card" style="background:#0d6e5c;">
-            <div class="label">Envois</div>
-            <div class="value" id="kpi-kin-envois">—</div>
-          </div>
-        </div>
-        <div class="col-4">
-          <div class="kpi-card" style="background:#198754;">
-            <div class="label">Retraits</div>
-            <div class="value" id="kpi-kin-retraits">—</div>
-          </div>
-        </div>
-        <div class="col-4">
-          <div class="kpi-card" style="background:#fd7e14;">
-            <div class="label">À servir <span class="counter-badge zero" id="kpi-kin-count">0</span></div>
-            <div class="value" id="kpi-kin-reste">—</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 2 boutons principaux -->
-      <div class="row g-2 mb-3">
-        <div class="col-6">
-          <button id="btn-envoi-kin" class="btn btn-primary w-100 py-3 fw-bold">
-            <i class="bi bi-send-fill"></i><br>
-            <span style="font-size:0.85rem;">Envoi vers Cotonou</span>
-          </button>
-        </div>
-        <div class="col-6">
-          <button id="btn-retrait-kin" class="btn btn-success w-100 py-3 fw-bold">
-            <i class="bi bi-cash-coin"></i><br>
-            <span style="font-size:0.85rem;">Retrait à Kinshasa</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="card shadow-sm mb-3">
-        <div class="card-body">
-          <div class="row g-2">
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Date</label>
-              <input type="date" id="kc-date" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Heure</label>
-              <input type="time" id="kc-heure" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Taux du jour</label>
-              <input type="number" step="0.01" id="kc-taux" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Bénéficiaire</label>
-              <input type="text" id="kc-beneficiaire" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Téléphone</label>
-              <input type="tel" id="kc-telephone" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Montant reçu ($)</label>
-              <input type="number" step="0.01" id="kc-recu" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Commission ($)</label>
-              <input type="number" step="0.01" id="kc-commission" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Servi au client ($)</label>
-              <input type="number" step="0.01" id="kc-servi" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Code <i class="bi bi-lock-fill text-secondary"></i></label>
-              <input type="text" id="kc-code" class="form-control form-control-sm bg-light" readonly placeholder="Auto">
-            </div>
-            <div class="col-12 d-flex align-items-end">
-              <button id="kc-ajouter" class="btn btn-primary btn-sm w-100">
-                <i class="bi bi-plus-circle"></i> Ajouter
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+            
 
       <!-- Filtres Kinshasa -->
       <div class="btn-group btn-group-sm w-100 mb-2" role="group">
@@ -540,57 +392,7 @@
         </div>
       </div>
 
-      <div class="card shadow-sm mb-3">
-        <div class="card-body">
-          <div class="row g-2">
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Date</label>
-              <input type="date" id="ck-date" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Heure</label>
-              <input type="time" id="ck-heure" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Taux du jour</label>
-              <input type="number" step="0.01" id="ck-taux" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Expéditeur</label>
-              <input type="text" id="ck-expediteur" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Tél. expéditeur</label>
-              <input type="tel" id="ck-tel-exp" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Tél. bénéficiaire</label>
-              <input type="tel" id="ck-tel-benef" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Montant reçu ($)</label>
-              <input type="number" step="0.01" id="ck-recu" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Commission ($)</label>
-              <input type="number" step="0.01" id="ck-commission" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Servi au client ($)</label>
-              <input type="number" step="0.01" id="ck-servi" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Code <i class="bi bi-lock-fill text-secondary"></i></label>
-              <input type="text" id="ck-code" class="form-control form-control-sm bg-light" readonly placeholder="Auto">
-            </div>
-            <div class="col-12 d-flex align-items-end">
-              <button id="ck-ajouter" class="btn btn-primary btn-sm w-100">
-                <i class="bi bi-plus-circle"></i> Ajouter
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      
 
       <!-- Filtres Cotonou -->
       <div class="btn-group btn-group-sm w-100 mb-2" role="group">
@@ -1352,35 +1154,12 @@
   }
 
   /* ========== PAGE KIN → CTN ========== */
-  async function ajouterKinCtn() {
-    const recu = val('kc-recu') || 0;
-    const comm = val('kc-commission') || 0;
-    const item = {
-      mois: moisActif,
-      date: val('kc-date'),
-      heure: val('kc-heure'),
-      taux: val('kc-taux'),
-      beneficiaire: val('kc-beneficiaire'),
-      telephone: val('kc-telephone'),
-      recu: recu,
-      commission: comm,
-      aServir: recu - comm,
-      servi: val('kc-servi') || 0,
-      code: await generateUniqueCode('kin')
-    };
-    item.reste = item.aServir - item.servi;
-    if (!item.date) { alert('La date est obligatoire.'); return; }
-    await dbAdd('kin_ctn', item);
-    resetForm(['kc-date', 'kc-heure', 'kc-taux', 'kc-beneficiaire', 'kc-telephone', 'kc-recu', 'kc-commission', 'kc-servi', 'kc-code']);
-    log('➕ KIN→CTN : ' + fmt(recu) + ' $');
-    await afficherKinCtn();
-    await afficherCodes();
-  }
+  
 
   async function afficherKinCtn() {
     const envois = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
     const tousRetraits = (await dbGetAll('retraits')).filter(r => r.mois === moisActif);
-    const retraits = tousRetraits.filter(r => r.sourceStore === 'ctn_kin');
+    const retraits = tousRetraits.filter(r => r.sourceStore === 'kin_ctn');
 
     const c = document.getElementById('kc-liste');
     if (!c) return;
@@ -1448,32 +1227,7 @@
   }
 
   /* ========== PAGE CTN → KIN ========== */
-  async function ajouterCtnKin() {
-    const recu = val('ck-recu') || 0;
-    const comm = val('ck-commission') || 0;
-    const servi = val('ck-servi') || 0;
-    const item = {
-      mois: moisActif,
-      date: val('ck-date'),
-      heure: val('ck-heure'),
-      taux: val('ck-taux'),
-      expediteur: val('ck-expediteur'),
-      telExp: val('ck-tel-exp'),
-      telBenef: val('ck-tel-benef'),
-      recu: recu,
-      commission: comm,
-      aServir: recu - comm,
-      servi: servi,
-      code: await generateUniqueCode('ctn')
-    };
-    item.reste = item.aServir - servi;
-    if (!item.date) { alert('La date est obligatoire.'); return; }
-    await dbAdd('ctn_kin', item);
-    resetForm(['ck-date', 'ck-heure', 'ck-taux', 'ck-expediteur', 'ck-tel-exp', 'ck-tel-benef', 'ck-recu', 'ck-commission', 'ck-servi', 'ck-code']);
-    log('➕ CTN→KIN : ' + fmt(recu) + ' $');
-    await afficherCtnKin();
-    await afficherCodes();
-  }
+  
 
   async function afficherCtnKin() {
     // Les envois CTN→KIN = opérations de l'agence Cotonou
@@ -1590,80 +1344,93 @@
   }
 
   async function afficherCodes() {
-    const c = document.getElementById('code-liste');
+    // Vue dynamique : codes non totalement servis depuis kin_ctn + ctn_kin
+    const kinCtn = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif && (i.reste || 0) > 0);
+    const ctnKin = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif && (i.reste || 0) > 0);
+    const c = document.getElementById('codes-liste');
     if (!c) return;
 
-    // Récupérer les transferts des 2 directions
-    const kinCtn = (await dbGetAll('kin_ctn')).filter(i => i.mois === moisActif);
-    const ctnKin = (await dbGetAll('ctn_kin')).filter(i => i.mois === moisActif);
+    // KPI globaux
+    const totalResteKin = kinCtn.reduce((s, i) => s + (i.reste || 0), 0);
+    const totalResteCtn = ctnKin.reduce((s, i) => s + (i.reste || 0), 0);
+    const countEl = document.getElementById('codes-count');
+    if (countEl) countEl.textContent = (kinCtn.length + ctnKin.length);
 
-    // Marquer la direction et ne garder que ceux avec reste > 0
-    const codes = [];
-    kinCtn.forEach(i => {
-      if ((i.reste || 0) > 0) codes.push({ ...i, direction: 'kin_ctn', sourceStore: 'kin_ctn' });
-    });
-    ctnKin.forEach(i => {
-      if ((i.reste || 0) > 0) codes.push({ ...i, direction: 'ctn_kin', sourceStore: 'ctn_kin' });
-    });
+    const kpiKin = document.getElementById('codes-kpi-kin');
+    if (kpiKin) kpiKin.textContent = fmt(totalResteKin) + ' $';
+    const kpiCtn = document.getElementById('codes-kpi-ctn');
+    if (kpiCtn) kpiCtn.textContent = fmt(totalResteCtn) + ' $';
 
-    // KPI globaux (sur tous les codes avec reste > 0)
-    let totAServir = 0, totServi = 0, totReste = 0;
-    codes.forEach(i => {
-      totAServir += i.aServir || 0;
-      totServi += i.servi || 0;
-      totReste += i.reste || 0;
-    });
-    document.getElementById('kpi-codes-reste').textContent = fmt(totReste) + ' $';
-    document.getElementById('kpi-codes-servi').textContent = fmt(totServi) + ' $';
-    document.getElementById('kpi-codes-ecart').textContent = fmt(totAServir - totServi) + ' $';
+    // Filtre (tous / kin_ctn / ctn_kin)
+    const filtreEl = document.getElementById('codes-filtre');
+    const filtre = filtreEl ? filtreEl.value : 'tous';
 
-    // Filtres
-    let filtered = codes;
-    if (filtreCodes === 'aservir')  filtered = codes.filter(i => statutCode(i) === 'aservir');
-    if (filtreCodes === 'partiels') filtered = codes.filter(i => statutCode(i) === 'partiels');
-    if (filtreCodes === 'soldes')   filtered = codes.filter(i => statutCode(i) === 'soldes');
+    let items = [];
+    if (filtre === 'tous' || filtre === 'kin_ctn') {
+      kinCtn.forEach(i => items.push({ dir: 'kin_ctn', ...i }));
+    }
+    if (filtre === 'tous' || filtre === 'ctn_kin') {
+      ctnKin.forEach(i => items.push({ dir: 'ctn_kin', ...i }));
+    }
 
-    if (filtered.length === 0) {
-      const msg = codes.length === 0
-        ? 'Aucun code en attente. Tous les transferts sont entièrement servis.'
-        : 'Aucun code pour ce filtre.';
-      c.innerHTML = '<div class="p-3 text-secondary small">' + msg + '</div>';
-      document.getElementById('code-total').textContent = '—';
+    if (items.length === 0) {
+      c.innerHTML = '<div class="p-3 text-secondary small">Aucun code en attente.</div>';
       return;
     }
 
-    let html = '<table class="table table-sm table-tl mb-0"><thead><tr>';
-    html += '<th>Date</th><th>Dir.</th><th>Bénéf.</th><th>Tel</th>';
-    html += '<th>À servir</th><th>Servi</th><th>Reste</th><th>Statut</th><th></th>';
-    html += '</tr></thead><tbody>';
+    // Tri : plus récent en premier
+    items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
-    // Trier par date décroissante
-    filtered.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    let out = '<table class="table table-sm table-tl mb-0"><thead><tr>';
+    out += '<th>Direction</th><th>Date</th><th>Code secret</th><th>Bénéficiaire</th><th>À servir</th><th>Servi</th><th>Reste</th><th></th>';
+    out += '</tr></thead><tbody>';
 
-    filtered.forEach(i => {
-      const statut = statutCode(i);
-      const nom = i.beneficiaire || i.expediteur || '—';
-      const tel = i.telephone || i.telBenef || '—';
-      html += `<tr>
-        <td>${i.date || ''}</td>
-        <td>${badgeDirection(i.direction)}</td>
-        <td style="text-align:left;">${nom}</td>
-        <td>${tel}</td>
+    items.forEach(i => {
+      const dirBadge = i.dir === 'kin_ctn'
+        ? '<span class="badge bg-primary">KIN → CTN</span>'
+        : '<span class="badge bg-secondary">CTN → KIN</span>';
+      out += `<tr>
+        <td>${dirBadge}</td>
+        <td>${i.date || '—'}</td>
+        <td><span class="badge bg-light text-dark font-monospace">${i.codeSecret || '—'}</span></td>
+        <td style="text-align:left;">${i.beneficiaire || '—'}</td>
         <td>${fmt(i.aServir)}</td>
-        <td>${fmt(i.servi)}</td>
-        <td class="statut-ko">${fmt(i.reste)}</td>
-        <td>${badgeStatut(statut)}</td>
+        <td>${fmt(i.servi || 0)}</td>
+        <td><strong class="statut-ko">${fmt(i.reste)}</strong></td>
         <td>
-          <button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('${i.sourceStore}',${i.id})"><i class="bi bi-pencil"></i></button>
-          <button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('${i.sourceStore}',${i.id})"><i class="bi bi-trash"></i></button>
+          <button class="btn btn-sm btn-outline-success" onclick="ouvrirRetraitDepuisCode('${i.dir}', ${i.id})">
+            <i class="bi bi-cash-coin"></i> Retrait
+          </button>
         </td>
       </tr>`;
     });
-    html += '</tbody></table>';
-    c.innerHTML = html;
 
-    document.getElementById('code-total').textContent =
-      filtered.length + ' code(s) — Reste total : ' + fmt(totReste) + ' $';
+    out += '</tbody></table>';
+    c.innerHTML = out;
+  }
+
+  async function ouvrirRetraitDepuisCode(sourceStore, transfertId) {
+    // Ouvre la modale de retrait pré-remplie
+    const item = await dbGet(sourceStore, transfertId);
+    if (!item) { alert('Transfert introuvable.'); return; }
+    if ((item.reste || 0) <= 0) { alert('Ce transfert est déjà soldé.'); return; }
+
+    retraitEnCours = { item: item, sourceStore: sourceStore };
+
+    document.getElementById('mr-code').value = item.codeSecret || '';
+    document.getElementById('mr-info-code').textContent = item.code || '—';
+    document.getElementById('mr-info-exp').textContent = item.expediteur || '—';
+    document.getElementById('mr-info-benef').textContent = item.beneficiaire || '—';
+    document.getElementById('mr-info-date').textContent = item.date || '—';
+    document.getElementById('mr-info-aservir').textContent = fmt(item.aServir) + ' $';
+    document.getElementById('mr-info-servi').textContent = fmt(item.servi || 0) + ' $';
+    document.getElementById('mr-info-reste').textContent = fmt(item.reste || 0) + ' $';
+    document.getElementById('mr-montant').value = (item.reste || 0).toFixed(2);
+    document.getElementById('mr-montant').max = item.reste || 0;
+    document.getElementById('mr-resultat').style.display = 'block';
+
+    const modal = new bootstrap.Modal(document.getElementById('modalRetrait'));
+    modal.show();
   }
 
   function initFiltresCodes() {
@@ -1974,8 +1741,6 @@
     if (store === 'kin_ctn')   { await afficherKinCtn(); await afficherCodes(); }
     if (store === 'ctn_kin')   { await afficherCtnKin(); await afficherCodes(); }
     if (store === 'depenses')  await afficherDepenses();
-    if (store === 'louis')     await afficherLouis();
-    if (store === 'dorcas')    await afficherDorcas();
   }
 
   /* ========== PAGE TABLEAU DE BORD ========== */
@@ -1999,6 +1764,7 @@
     const totKinCtnRecu = kinCtn.reduce((s, i) => s + (i.recu || 0), 0);
 
     const totCtnKinRecu = ctnKin.reduce((s, i) => s + (i.recu || 0), 0);
+    const totCtnKinServi = ctnKin.reduce((s, i) => s + (i.servi || 0), 0);
     const totCtnKinComm = ctnKin.reduce((s, i) => s + (i.commission || 0), 0);
 
     const totCodesReste = codes.reduce((s, i) => s + (i.reste || 0), 0);
@@ -2020,14 +1786,14 @@
 
     // Calcul KIN
     const entreesKIN = soldeInitialKIN + totApproKIN + totKinCtnRecu + totCodesReste;
-    const sortiesKIN = totCtnKinRecu + totDepKIN;
+    const sortiesKIN = totCtnKinServi + totKinCtnServi + totDepKIN;
     const soldeKIN = entreesKIN - sortiesKIN;
 
     return {
       soldeCTN, soldeKIN,
       totApproCTN, totApproKIN, totApproLegacy,
       totKinCtnRecu, totKinCtnServi, totKinCtnComm,
-      totCtnKinRecu, totCtnKinComm,
+      totCtnKinRecu, totCtnKinServi, totCtnKinComm,
       totCodesReste, totCodesServi,
       totDepCTN, totDepKIN, totDepAutre,
 
@@ -2056,13 +1822,13 @@
           <tr><td style="text-align:left;">Approvisionnement</td><td>${fmt(s.totApproCTN)}</td><td>${fmt(s.totApproKIN)}</td></tr>
           
           <tr><td style="text-align:left;">Entrées transferts</td><td>${fmt(s.totCtnKinRecu)}</td><td>${fmt(s.totKinCtnRecu)}</td></tr>
-          <tr><td style="text-align:left;">Codes servis</td><td>${fmt(s.totKinCtnServi)}</td><td>${fmt(s.totCtnKinRecu)}</td></tr>
+          <tr><td style="text-align:left;">Codes servis</td><td>${fmt(s.totKinCtnServi)}</td><td>${fmt(s.totCtnKinServi)}</td></tr>
           <tr><td style="text-align:left;">Codes en attente</td><td>${fmt(s.totCodesReste)}</td><td>—</td></tr>
           <tr class="table-light"><td style="text-align:left;"><strong>SOUS-TOTAL ENTRÉES</strong></td><td><strong>${fmt(s.entreesCTN)}</strong></td><td><strong>${fmt(s.entreesKIN)}</strong></td></tr>
           <tr><td style="text-align:left;">Sorties de fonds</td><td>${fmt(s.totDepCTN)}</td><td>${fmt(s.totDepKIN)}</td></tr>
           <tr><td style="text-align:left;">Autres dépenses</td><td>${fmt(s.totDepAutre)}</td><td>—</td></tr>
           <tr class="table-light"><td style="text-align:left;"><strong>SOUS-TOTAL SORTIES</strong></td><td><strong>${fmt(s.sortiesCTN)}</strong></td><td><strong>${fmt(s.sortiesKIN)}</strong></td></tr>
-          <tr><td style="text-align:left;">Commissions</td><td>${fmt(s.totKinCtnComm)}</td><td>${fmt(s.totCtnKinComm)}</td></tr>
+          <tr><td style="text-align:left;">Commissions</td><td>${fmt(s.totCtnKinComm)}</td><td>${fmt(s.totKinCtnComm)}</td></tr>
           <tr class="table-success"><td style="text-align:left;"><strong>MONTANT RESTANT</strong></td><td><strong>${fmt(s.soldeCTN)}</strong></td><td><strong>${fmt(s.soldeKIN)}</strong></td></tr>
         </tbody>
       </table>`;
@@ -2585,9 +2351,7 @@
     if (document.getElementById('agent-ajouter'))
       document.getElementById('agent-ajouter').addEventListener('click', ajouterAgent);
       diagStep('  ✅ appro-ajouter');
-      document.getElementById('kc-ajouter').addEventListener('click', ajouterKinCtn);
       diagStep('  ✅ kc-ajouter');
-      document.getElementById('ck-ajouter').addEventListener('click', ajouterCtnKin);
       diagStep('  ✅ ck-ajouter');
       initFiltresCodes();
       diagStep('  ✅ initFiltresCodes');
