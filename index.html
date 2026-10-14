@@ -330,40 +330,49 @@
     <section id="page-appro" class="page">
       <h2 class="h5 text-primary mb-3"><i class="bi bi-wallet2"></i> Approvisionnement</h2>
 
-      <div class="card shadow-sm mb-3">
+            <div class="card shadow-sm mb-3">
         <div class="card-body">
-          <div class="row g-2">
+          <div class="row g-2 mb-2">
             <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Date</label>
+              <label class="form-label small fw-bold mb-1">Date *</label>
               <input type="date" id="appro-date" class="form-control form-control-sm">
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-5">
+              <label class="form-label small fw-bold mb-1">Agence à approvisionner *</label>
+              <div class="d-flex gap-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="appro-agence" id="appro-agence-ctn" value="CTN">
+                  <label class="form-check-label small" for="appro-agence-ctn">🇧🇯 Cotonou</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="appro-agence" id="appro-agence-kin" value="KIN">
+                  <label class="form-check-label small" for="appro-agence-kin">🇨🇩 Kinshasa</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label small fw-bold mb-1">Montant ($) *</label>
+              <input type="number" step="0.01" id="appro-montant" class="form-control form-control-sm">
+            </div>
+          </div>
+          <div class="row g-2">
+            <div class="col-12 col-md-6">
+              <label class="form-label small fw-bold mb-1">Agent apporteur *</label>
+              <select id="appro-agent" class="form-select form-select-sm">
+                <option value="">— Choisir un agent —</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-6">
               <label class="form-label small fw-bold mb-1">Libellé</label>
-              <input type="text" id="appro-libelle" class="form-control form-control-sm" placeholder="Appro. caisse">
+              <input type="text" id="appro-libelle" class="form-control form-control-sm" placeholder="Ex : Apport caisse KIN">
             </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Fonds Kin (En $)</label>
-              <input type="number" step="0.01" id="appro-fonds-kin" class="form-control form-control-sm">
+            <div class="col-12">
+              <label class="form-label small fw-bold mb-1">Observation</label>
+              <textarea id="appro-observation" class="form-control form-control-sm" rows="2" placeholder="Notes libres…"></textarea>
             </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Transfert reçu Divine ($)</label>
-              <input type="number" step="0.01" id="appro-fonds-divine" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Change ($)</label>
-              <input type="number" step="0.01" id="appro-change" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Taux</label>
-              <input type="number" step="0.01" id="appro-taux" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold mb-1">Agent</label>
-              <input type="text" id="appro-agent" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-3 d-flex align-items-end">
-              <button id="appro-ajouter" class="btn btn-primary btn-sm w-100">
-                <i class="bi bi-plus-circle"></i> Ajouter
+            <div class="col-12 d-flex justify-content-end">
+              <button id="appro-ajouter" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle"></i> Enregistrer l'approvisionnement
               </button>
             </div>
           </div>
@@ -1120,6 +1129,17 @@
   }
 
 
+
+  /* ========== CHARGER SELECT AGENTS ========== */
+  async function chargerSelectAgents() {
+    const sel = document.getElementById('appro-agent');
+    if (!sel) return;
+    const agents = await dbGetAll('agents');
+    const actifs = agents.filter(a => a.actif !== false);
+    sel.innerHTML = '<option value="">— Choisir un agent —</option>' +
+      actifs.map(a => `<option value="${a.nom}">${a.nom}</option>`).join('');
+  }
+
   /* ========== SEED AGENTS PAR DÉFAUT ========== */
   async function initialiserAgents() {
     try {
@@ -1298,51 +1318,81 @@
 
   /* ========== PAGE APPROVISIONNEMENT ========== */
   async function ajouterAppro() {
+    const date = val('appro-date');
+    const agenceEl = document.querySelector('input[name="appro-agence"]:checked');
+    const agence = agenceEl ? agenceEl.value : '';
+    const montant = val('appro-montant') || 0;
+    const agentSelect = document.getElementById('appro-agent');
+    const agentNom = agentSelect ? agentSelect.value : '';
+    const libelle = val('appro-libelle') || '';
+    const observation = val('appro-observation') || '';
+
+    if (!date)     { alert('La date est obligatoire.'); return; }
+    if (!agence)   { alert('Choisissez l\'agence à approvisionner.'); return; }
+    if (montant <= 0) { alert('Le montant doit être supérieur à 0.'); return; }
+    if (!agentNom) { alert('Choisissez un agent apporteur.'); return; }
+
     const item = {
       mois: moisActif,
-      date: val('appro-date'),
-      libelle: val('appro-libelle'),
-      fondsKin: val('appro-fonds-kin') || 0,
-      fondsDivine: val('appro-fonds-divine') || 0,
-      change: val('appro-change') || 0,
-      taux: val('appro-taux') || 0,
-      fcfa: (val('appro-change') || 0) * (val('appro-taux') || 0),
-      agent: val('appro-agent')
+      date: date,
+      agence: agence,
+      montant: montant,
+      agentNom: agentNom,
+      libelle: libelle,
+      observation: observation
     };
-    if (!item.date) { alert('La date est obligatoire.'); return; }
     await dbAdd('appro', item);
-    resetForm(['appro-date', 'appro-libelle', 'appro-fonds-kin', 'appro-fonds-divine', 'appro-change', 'appro-taux', 'appro-agent']);
-    log('➕ Appro ajouté : ' + fmt(item.fondsKin));
+    resetForm(['appro-date', 'appro-montant', 'appro-libelle', 'appro-observation']);
+    document.querySelectorAll('input[name="appro-agence"]').forEach(r => r.checked = false);
+    if (agentSelect) agentSelect.value = '';
+    log('➕ Appro ' + agence + ' : ' + fmt(montant) + ' $ par ' + agentNom);
     await afficherAppro();
+    await afficherTbord();
   }
 
   async function afficherAppro() {
     const items = (await dbGetAll('appro')).filter(i => i.mois === moisActif);
     const c = document.getElementById('appro-liste');
     if (!c) return;
-    if (items.length === 0) { c.innerHTML = '<div class="p-3 text-secondary small">Aucune transaction.</div>'; document.getElementById('appro-total').textContent = 'Total : 0.00 $'; return; }
+    if (items.length === 0) {
+      c.innerHTML = '<div class="p-3 text-secondary small">Aucune transaction.</div>';
+      document.getElementById('appro-total').textContent = 'Total : 0.00 $';
+      return;
+    }
 
-    let html = '<table class="table table-sm table-tl mb-0"><thead><tr><th>Date</th><th>Libellé</th><th>Fonds Kin</th><th>Divine</th><th>Change</th><th>Taux</th><th>FCFA</th><th>Agent</th><th></th></tr></thead><tbody>';
-    let totKin = 0, totDivine = 0, totChange = 0;
+    let html = '<table class="table table-sm table-tl mb-0"><thead><tr>';
+    html += '<th>Date</th><th>Agence</th><th>Agent</th><th>Libellé</th><th>Montant</th><th>Observation</th><th></th>';
+    html += '</tr></thead><tbody>';
+
+    let totCTN = 0, totKIN = 0;
+
+    // Tri : plus récent en premier
+    items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
     items.forEach(i => {
-      totKin += i.fondsKin || 0;
-      totDivine += i.fondsDivine || 0;
-      totChange += i.change || 0;
+      if (i.agence === 'CTN') totCTN += i.montant || 0;
+      else if (i.agence === 'KIN') totKIN += i.montant || 0;
+
+      const flag = i.agence === 'CTN' ? '🇧🇯 Cotonou' : '🇨🇩 Kinshasa';
+      const badgeColor = i.agence === 'CTN' ? 'bg-primary' : 'bg-success';
+
       html += `<tr>
         <td>${i.date || '—'}</td>
-        <td style="text-align:left;">${i.libelle || ''}</td>
-        <td>${fmt(i.fondsKin)}</td>
-        <td>${fmt(i.fondsDivine)}</td>
-        <td>${fmt(i.change)}</td>
-        <td>${i.taux || '—'}</td>
-        <td>${i.fcfa ? Math.round(i.fcfa).toLocaleString('fr-FR') : '—'}</td>
-        <td>${i.agent || ''}</td>
-        <td><button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('appro',${i.id})"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('appro',${i.id})"><i class="bi bi-trash"></i></button></td>
+        <td><span class="badge ${badgeColor}">${flag}</span></td>
+        <td>${i.agentNom || '—'}</td>
+        <td style="text-align:left;">${i.libelle || '—'}</td>
+        <td><strong>${fmt(i.montant)}</strong></td>
+        <td style="text-align:left;"><small class="text-secondary">${i.observation || '—'}</small></td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary me-1" onclick="editerItem('appro',${i.id})"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-sm btn-outline-danger" onclick="supprimerItem('appro',${i.id})"><i class="bi bi-trash"></i></button>
+        </td>
       </tr>`;
     });
+
     html += '</tbody></table>';
     c.innerHTML = html;
-    document.getElementById('appro-total').textContent = 'Kin : ' + fmt(totKin) + ' $ | Divine : ' + fmt(totDivine) + ' $';
+    document.getElementById('appro-total').textContent = 'CTN : ' + fmt(totCTN) + ' $ | KIN : ' + fmt(totKIN) + ' $';
   }
 
   /* ========== PAGE KIN → CTN ========== */
@@ -1978,8 +2028,11 @@
     const dorcas = (await dbGetAll('dorcas')).filter(i => i.mois === moisActif);
 
     // Totaux
-    const totApproKin = appro.reduce((s, i) => s + (i.fondsKin || 0), 0);
-    const totApproDivine = appro.reduce((s, i) => s + (i.fondsDivine || 0), 0);
+    // Approvisionnements ventilés par agence (v3)
+    const totApproCTN = appro.filter(i => i.agence === 'CTN').reduce((s, i) => s + (i.montant || 0), 0);
+    const totApproKIN = appro.filter(i => i.agence === 'KIN').reduce((s, i) => s + (i.montant || 0), 0);
+    // Legacy : anciennes entrées qui n'avaient pas de champ agence
+    const totApproLegacy = appro.filter(i => !i.agence).reduce((s, i) => s + (i.fondsKin || 0) + (i.fondsDivine || 0), 0);
 
     const totKinCtnServi = kinCtn.reduce((s, i) => s + (i.servi || 0), 0);
     const totKinCtnComm = kinCtn.reduce((s, i) => s + (i.commission || 0), 0);
@@ -2002,18 +2055,18 @@
     const soldeInitialKIN = (await getConfig('solde_initial_kin_' + moisActif)) || 0;
 
     // Calcul CTN
-    const entreesCTN = soldeInitialCTN + totApproKin + totApproDivine + totCtnKinRecu + totLouisReste + totDorcasReste;
+    const entreesCTN = soldeInitialCTN + totApproCTN + totApproLegacy + totCtnKinRecu + totLouisReste + totDorcasReste;
     const sortiesCTN = totKinCtnServi + totDepCTN + totDepAutre;
     const soldeCTN = entreesCTN - sortiesCTN;
 
     // Calcul KIN
-    const entreesKIN = soldeInitialKIN + totKinCtnRecu + totCodesReste;
+    const entreesKIN = soldeInitialKIN + totApproKIN + totKinCtnRecu + totCodesReste;
     const sortiesKIN = totCtnKinRecu + totDepKIN;
     const soldeKIN = entreesKIN - sortiesKIN;
 
     return {
       soldeCTN, soldeKIN,
-      totApproKin, totApproDivine,
+      totApproCTN, totApproKIN, totApproLegacy,
       totKinCtnRecu, totKinCtnServi, totKinCtnComm,
       totCtnKinRecu, totCtnKinComm,
       totCodesReste, totCodesServi,
@@ -2041,7 +2094,7 @@
         <thead><tr><th style="text-align:left;">Rubrique</th><th>Cotonou</th><th>Kinshasa</th></tr></thead>
         <tbody>
           <tr><td style="text-align:left;">Solde initial</td><td>${fmt(s.soldeInitialCTN)}</td><td>${fmt(s.soldeInitialKIN)}</td></tr>
-          <tr><td style="text-align:left;">Approvisionnement</td><td>${fmt(s.totApproKin + s.totApproDivine)}</td><td>—</td></tr>
+          <tr><td style="text-align:left;">Approvisionnement</td><td>${fmt(s.totApproCTN)}</td><td>${fmt(s.totApproKIN)}</td></tr>
           <tr><td style="text-align:left;">Louis / Dorcas</td><td>${fmt(s.totLouisReste + s.totDorcasReste)}</td><td>—</td></tr>
           <tr><td style="text-align:left;">Entrées transferts</td><td>${fmt(s.totCtnKinRecu)}</td><td>${fmt(s.totKinCtnRecu)}</td></tr>
           <tr><td style="text-align:left;">Codes servis</td><td>${fmt(s.totKinCtnServi)}</td><td>${fmt(s.totCtnKinRecu)}</td></tr>
@@ -2543,6 +2596,7 @@
       diagStep('2. Ouverture IndexedDB...');
       await openDB();
     await initialiserAgents();
+    await chargerSelectAgents();
       log('✅ IndexedDB prêt');
       majBadge('✅ DB prête');
       diagStep('3. IndexedDB ouverte ✅');
