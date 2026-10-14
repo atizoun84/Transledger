@@ -219,6 +219,60 @@
   #compta-table td.text-danger { color:#dc3545 !important; }
   #compta-table td.text-success { color:#198754 !important; }
 </style>
+
+<style id="journal-style">
+  /* Print : cacher tout sauf la zone journal */
+  @media print {
+    body * { visibility: hidden !important; }
+    #journal-print-area, #journal-print-area * { visibility: visible !important; }
+    #journal-print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+    .no-print { display: none !important; }
+    .journal-header-print { display: block !important; }
+    .journal-signature { display: block !important; }
+    .page { display: block !important; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; page-break-after: auto; }
+    thead { display: table-header-group; }
+  }
+  .journal-header-print { display: none; }
+  .journal-signature { display: none; }
+  .journal-entete-pro {
+    text-align: center;
+    border-bottom: 3px double #0d6e5c;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+  }
+  .journal-entete-pro h1 {
+    color: #0d6e5c;
+    font-size: 1.6rem;
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: 1px;
+  }
+  .journal-entete-pro .sub {
+    color: #555;
+    font-size: .85rem;
+    margin-top: 4px;
+  }
+  .journal-sig-block {
+    margin-top: 60px;
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+  }
+  .journal-sig-block .sig-zone {
+    flex: 1;
+    border-top: 1px solid #999;
+    padding-top: 8px;
+    text-align: center;
+    font-size: .85rem;
+  }
+  .journal-totaux {
+    background: #f0f7f5;
+    font-weight: 700;
+    border-top: 2px solid #0d6e5c;
+  }
+</style>
 </head>
 <body>
 
@@ -271,6 +325,7 @@
         <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="ctn-kin"><i class="bi bi-geo-alt-fill"></i> Agence Cotonou (Bénin)</a></li>
         <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="codes"><i class="bi bi-hourglass-split"></i> Codes en attente</a></li>
         <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="compensations"><i class="bi bi-arrow-left-right"></i> Compensations</a></li>
+        <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="journal"><i class="bi bi-journal-text"></i> Journal</a></li>
         <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="depenses"><i class="bi bi-cash-stack"></i> Dépenses</a></li>
         <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="agents"><i class="bi bi-people"></i> Comptes agents</a></li>
         <li class="nav-item"><a class="nav-link menu-link" href="#" data-page="parametres"><i class="bi bi-gear"></i> Paramètres</a></li>
@@ -817,6 +872,89 @@
         </div>
       </div>
     </section>
+
+    <!-- ============ PAGE JOURNAL DES OPÉRATIONS ============ -->
+    <section id="page-journal" class="page">
+      <h2 class="h5 text-primary mb-3 no-print"><i class="bi bi-journal-text"></i> Journal des opérations</h2>
+
+      <!-- Filtres -->
+      <div class="card shadow-sm mb-3 no-print" style="border-left:4px solid #0d6e5c;">
+        <div class="card-body py-2">
+          <div class="row g-2 align-items-end">
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Du *</label>
+              <input type="date" id="journal-debut" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold mb-1">Au *</label>
+              <input type="date" id="journal-fin" class="form-control form-control-sm">
+            </div>
+            <div class="col-6 col-md-3">
+              <button class="btn btn-primary btn-sm w-100" onclick="afficherJournal()">
+                <i class="bi bi-search"></i> Actualiser
+              </button>
+            </div>
+            <div class="col-6 col-md-3">
+              <button class="btn btn-success btn-sm w-100" onclick="imprimerJournal()">
+                <i class="bi bi-printer-fill"></i> Imprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone à imprimer -->
+      <div id="journal-print-area">
+
+        <!-- En-tête pro (visible uniquement à l'impression) -->
+        <div class="journal-header-print journal-entete-pro">
+          <h1>AFRI LINK LEDGER</h1>
+          <div class="sub">Système de gestion des transferts — Cotonou ↔ Kinshasa</div>
+          <div class="sub" style="margin-top:8px;">
+            <strong>JOURNAL DES OPÉRATIONS</strong> — Du <span id="journal-print-debut">—</span> au <span id="journal-print-fin">—</span>
+          </div>
+        </div>
+
+        <!-- 2 tableaux comparatifs -->
+        <div class="row g-3" id="journal-tables">
+          <div class="col-12 col-lg-6">
+            <div class="card shadow-sm">
+              <div class="card-header" style="background:#0d6e5c; color:#fff;">
+                <i class="bi bi-geo-alt-fill"></i> 🇧🇯 COTONOU — <span id="journal-ctn-count">0</span> opération(s)
+              </div>
+              <div class="card-body p-0">
+                <div id="journal-ctn-liste" class="table-responsive"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="card shadow-sm">
+              <div class="card-header" style="background:#198754; color:#fff;">
+                <i class="bi bi-geo-alt-fill"></i> 🇨🇩 KINSHASA — <span id="journal-kin-count">0</span> opération(s)
+              </div>
+              <div class="card-body p-0">
+                <div id="journal-kin-liste" class="table-responsive"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zone signature PDG (visible uniquement à l'impression) -->
+        <div class="journal-signature journal-sig-block">
+          <div class="sig-zone">
+            <div style="height:50px;"></div>
+            <strong>Le Comptable</strong>
+            <div class="text-secondary small">Nom &amp; Signature</div>
+          </div>
+          <div class="sig-zone">
+            <div style="height:50px;"></div>
+            <strong>Le Directeur Général (PDG)</strong>
+            <div class="text-secondary small">Nom &amp; Signature</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
 
 
     <!-- ============ PAGE DÉPENSES ============ -->
@@ -1386,6 +1524,7 @@
     if (nom === 'ctn-kin')    afficherCtnKin();
     if (nom === 'codes')      afficherCodes();
     if (nom === 'compensations') afficherCompensations();
+    if (nom === 'journal')    afficherJournal();
     if (nom === 'depenses')   afficherDepenses();
     if (nom === 'agents')     afficherAgents();
     if (nom === 'parametres') afficherParametres();
@@ -2202,6 +2341,14 @@
     if (store === 'kin_ctn')   { await afficherKinCtn(); await afficherCodes(); }
     if (store === 'ctn_kin')   { await afficherCtnKin(); await afficherCodes(); }
     if (store === 'depenses')  await afficherDepenses();
+    // Refresh vues concernées
+    try { await afficherKinCtn(); } catch(e) {}
+    try { await afficherCtnKin(); } catch(e) {}
+    try { await afficherComptabilite(); } catch(e) {}
+    try { await afficherJournal(); } catch(e) {}
+    try { await afficherTbord(); } catch(e) {}
+    try { await majCompteurs(); } catch(e) {}
+  
   }
 
   /* ========== PAGE TABLEAU DE BORD ========== */
@@ -2768,6 +2915,7 @@
     await afficherCodes();
     await afficherComptabilite();
     await afficherCompensations();
+    await afficherJournal();
     await afficherDepenses();
     await afficherAgents();
     await afficherParametres();
@@ -3151,6 +3299,208 @@
     set('compta-kin-reste',     fmt(kin.totReste) + ' $');
     set('compta-kin-solde',     fmt(kin.solde) + ' $');
     set('compta-kin-depenses',  fmt(kin.depVille) + ' $');
+  }
+
+
+  /* ========== PAGE JOURNAL DES OPÉRATIONS ========== */
+  function _dateDefaultDebut() {
+    // Premier jour du mois actif
+    if (moisActif) return moisActif + '-01';
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
+  }
+
+  function _dateDefaultFin() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function _dateDansPlage(date, debut, fin) {
+    if (!date) return false;
+    if (debut && date < debut) return false;
+    if (fin && date > fin) return false;
+    return true;
+  }
+
+  async function construireOperationsAgence(agence, debut, fin) {
+    const ops = [];
+    const kinCtn = await dbGetAll('kin_ctn');
+    const ctnKin = await dbGetAll('ctn_kin');
+    const retraits = await dbGetAll('retraits');
+    const comps = await dbGetAll('compensations');
+    const depenses = await dbGetAll('depenses');
+    const appros = await dbGetAll('appro');
+
+    // 1) Envois ÉMIS par l'agence
+    const envoisEmis = agence === 'CTN' ? ctnKin : kinCtn;
+    envoisEmis.forEach(e => {
+      if (!_dateDansPlage(e.date, debut, fin)) return;
+      ops.push({
+        date: e.date, heure: e.heure,
+        type: 'envoi',
+        libelle: 'Envoi ' + agence + ' → ' + (agence === 'CTN' ? 'KIN' : 'CTN')
+                 + ' — ' + (e.beneficiaire || ''),
+        code: e.code || '',
+        entree: e.recu || 0,
+        sortie: 0
+      });
+    });
+
+    // 2) Retraits PAYÉS par l'agence
+    // Retrait effectué à CTN → sourceStore = 'kin_ctn'
+    // Retrait effectué à KIN → sourceStore = 'ctn_kin'
+    const srcRetrait = agence === 'CTN' ? 'kin_ctn' : 'ctn_kin';
+    retraits.filter(r => r.sourceStore === srcRetrait).forEach(r => {
+      if (!_dateDansPlage(r.date, debut, fin)) return;
+      ops.push({
+        date: r.date, heure: r.heure,
+        type: 'retrait',
+        libelle: 'Retrait — ' + (r.beneficiaire || r.expediteur || '') + ' (' + (r.agence || agence) + ')',
+        code: r.codeEnvoi || '',
+        entree: 0,
+        sortie: r.montantRetrait || 0
+      });
+    });
+
+    // 3) Compensations
+    comps.forEach(c => {
+      if (!_dateDansPlage(c.date, debut, fin)) return;
+      if (c.source === agence) {
+        ops.push({
+          date: c.date, heure: c.heure,
+          type: 'comp_sortie',
+          libelle: 'Compensation envoyée → ' + c.dest,
+          code: c.envoiCode || '',
+          entree: 0,
+          sortie: c.montant || 0
+        });
+      }
+      if (c.dest === agence) {
+        ops.push({
+          date: c.date, heure: c.heure,
+          type: 'comp_entree',
+          libelle: 'Compensation reçue ← ' + c.source,
+          code: c.envoiCode || '',
+          entree: c.montant || 0,
+          sortie: 0
+        });
+      }
+    });
+
+    // 4) Approvisionnements
+    appros.filter(a => a.agence === agence).forEach(a => {
+      if (!_dateDansPlage(a.date, debut, fin)) return;
+      ops.push({
+        date: a.date, heure: '',
+        type: 'appro',
+        libelle: 'Approvisionnement — ' + (a.agentNom || '') + (a.libelle ? ' (' + a.libelle + ')' : ''),
+        code: '',
+        entree: a.montant || 0,
+        sortie: 0
+      });
+    });
+
+    // 5) Dépenses
+    depenses.forEach(d => {
+      if (!_dateDansPlage(d.date, debut, fin)) return;
+      if (agence === 'CTN' && (d.ville === 'CTN' || d.ville === 'AUTRE')) {
+        ops.push({
+          date: d.date, heure: '',
+          type: 'depense',
+          libelle: 'Dépense — ' + (d.libelle || d.description || '') + (d.ville === 'AUTRE' ? ' [Autre]' : ''),
+          code: '',
+          entree: 0,
+          sortie: d.montant || 0
+        });
+      } else if (agence === 'KIN' && d.ville === 'KIN') {
+        ops.push({
+          date: d.date, heure: '',
+          type: 'depense',
+          libelle: 'Dépense — ' + (d.libelle || d.description || ''),
+          code: '',
+          entree: 0,
+          sortie: d.montant || 0
+        });
+      }
+    });
+
+    ops.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    return ops;
+  }
+
+  function _rendreTableauJournal(ops) {
+    if (ops.length === 0) {
+      return '<div class="p-3 text-secondary small">Aucune opération sur cette période.</div>';
+    }
+    let totE = 0, totS = 0;
+    let out = '<table class="table table-sm mb-0" style="font-size:.82rem;"><thead class="table-light">';
+    out += '<tr><th>Date</th><th>Type</th><th>Libellé</th><th>Code</th><th class="text-end">Entrée</th><th class="text-end">Sortie</th></tr>';
+    out += '</thead><tbody>';
+    ops.forEach(o => {
+      totE += o.entree || 0;
+      totS += o.sortie || 0;
+      let badge = '';
+      if (o.type === 'envoi')      badge = '<span class="badge bg-primary">Envoi</span>';
+      else if (o.type === 'retrait')  badge = '<span class="badge bg-success">Retrait</span>';
+      else if (o.type === 'comp_entree') badge = '<span class="badge bg-info text-dark">Comp. ←</span>';
+      else if (o.type === 'comp_sortie') badge = '<span class="badge bg-warning text-dark">Comp. →</span>';
+      else if (o.type === 'appro')    badge = '<span class="badge bg-secondary">Appro.</span>';
+      else if (o.type === 'depense')  badge = '<span class="badge bg-danger">Dépense</span>';
+      out += '<tr>';
+      out += '<td class="text-nowrap">' + (o.date || '') + (o.heure ? '<br><small class="text-secondary">' + o.heure + '</small>' : '') + '</td>';
+      out += '<td>' + badge + '</td>';
+      out += '<td style="text-align:left;">' + (o.libelle || '') + '</td>';
+      out += '<td><small class="font-monospace">' + (o.code || '—') + '</small></td>';
+      out += '<td class="text-end text-success">' + (o.entree ? fmt(o.entree) : '—') + '</td>';
+      out += '<td class="text-end text-danger">' + (o.sortie ? fmt(o.sortie) : '—') + '</td>';
+      out += '</tr>';
+    });
+    out += '</tbody><tfoot class="journal-totaux">';
+    out += '<tr><td colspan="4" class="text-end">TOTAUX (' + ops.length + ')</td>';
+    out += '<td class="text-end text-success">' + fmt(totE) + '</td>';
+    out += '<td class="text-end text-danger">' + fmt(totS) + '</td></tr>';
+    out += '<tr><td colspan="4" class="text-end">SOLDE PÉRIODE</td>';
+    out += '<td colspan="2" class="text-end">' + fmt(totE - totS) + '</td></tr>';
+    out += '</tfoot></table>';
+    return out;
+  }
+
+  async function afficherJournal() {
+    const debutEl = document.getElementById('journal-debut');
+    const finEl = document.getElementById('journal-fin');
+    if (!debutEl || !finEl) return;
+
+    // Valeurs par défaut si vide
+    if (!debutEl.value) debutEl.value = _dateDefaultDebut();
+    if (!finEl.value) finEl.value = _dateDefaultFin();
+
+    const debut = debutEl.value;
+    const fin = finEl.value;
+
+    const opsCtn = await construireOperationsAgence('CTN', debut, fin);
+    const opsKin = await construireOperationsAgence('KIN', debut, fin);
+
+    document.getElementById('journal-ctn-liste').innerHTML = _rendreTableauJournal(opsCtn);
+    document.getElementById('journal-kin-liste').innerHTML = _rendreTableauJournal(opsKin);
+    document.getElementById('journal-ctn-count').textContent = opsCtn.length;
+    document.getElementById('journal-kin-count').textContent = opsKin.length;
+
+    // En-tête impression
+    const fmtFr = (s) => {
+      if (!s) return '—';
+      const [y, m, d] = s.split('-');
+      return d + '/' + m + '/' + y;
+    };
+    document.getElementById('journal-print-debut').textContent = fmtFr(debut);
+    document.getElementById('journal-print-fin').textContent = fmtFr(fin);
+  }
+
+  function imprimerJournal() {
+    const debutEl = document.getElementById('journal-debut');
+    const finEl = document.getElementById('journal-fin');
+    if (debutEl && !debutEl.value) debutEl.value = _dateDefaultDebut();
+    if (finEl && !finEl.value) finEl.value = _dateDefaultFin();
+    // Refresh avant impression
+    afficherJournal().then(() => window.print());
   }
 
   /* ========== SÉCURITÉ ÉCOUTEURS ========== */
