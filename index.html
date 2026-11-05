@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d6e5c">
+  <meta name="description" content="TransLedger - Transferts KIN ↔ CTN par Atizoun">
+  <title>TransLedger</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="icon" type="image/png" href="./icon-192.png">
+  <script type="module" crossorigin src="./index-D12hkORu.js"></script>
+  <link rel="modulepreload" crossorigin href="./rolldown-runtime-DK3Fl9T5.js">
+  <link rel="modulepreload" crossorigin href="./firebase-xAqBbcgB.js">
+  <link rel="stylesheet" crossorigin href="./index-BKb4GZ-m.css">
+</head>
+<body>
+
+  <header class="app-header" id="app-header">
+    <div class="header-inner">
+      <button class="btn-burger" id="btn-burger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="header-left">
+        <img src="./benin.png" alt="Bénin" class="header-flag">
+      </div>
+      <div class="header-center">
+        <div class="header-title"><i class="ico">💰</i> TransLedger</div>
+        <div class="header-sub">Transferts KIN ↔ CTN</div>
+        <div class="taux-box" id="header-taux">
+          <span class="taux-ico">🔄</span>
+          <span>Taux :</span>
+          <span class="taux-value" id="header-taux-value">—</span>
+          <span>FCFA/$</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <img src="./rdc.png" alt="RDC" class="header-flag">
+      </div>
+    </div>
+    <!-- Infos utilisateur + déconnexion -->
+    <div id="header-user-bar" style="display:flex;justify-content:space-between;align-items:center;padding:4px 12px 6px;font-size:.7rem;background:rgba(0,0,0,.15);">
+      <span id="header-user-info" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%;"></span>
+      <button id="btn-logout-header" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.35);padding:2px 8px;font-size:.68rem;border-radius:6px;">🚪 Déconnexion</button>
+    </div>
+  </header>
+
+  <div class="drawer-overlay" id="drawer-overlay"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer-header">
+      <h5>💰 TransLedger</h5>
+      <button class="btn-close-drawer" id="btn-close-drawer" aria-label="Fermer">✕</button>
+    </div>
+    <nav class="drawer-nav" id="drawer-nav">
+      <a href="#tbord"         class="menu-link" data-page="tbord">📊 Tableau de bord</a>
+      <a href="#compta"        class="menu-link" data-page="compta">🧮 Comptabilité &amp; Analyse</a>
+      <a href="#appro"         class="menu-link" data-page="appro">💼 Approvisionnement</a>
+      <a href="#kin-ctn"       class="menu-link" data-page="kin-ctn">📍 Agence Kinshasa (RDC)</a>
+      <a href="#ctn-kin"       class="menu-link" data-page="ctn-kin">📍 Agence Cotonou (Bénin)</a>
+      <a href="#codes"         class="menu-link" data-page="codes">⏳ Codes en attente</a>
+      <a href="#compensations" class="menu-link" data-page="compensations">🔁 Compensations</a>
+      <a href="#remboursements" class="menu-link" data-page="remboursements">💸 Remboursements</a>
+      <a href="#journal"       class="menu-link" data-page="journal">📒 Journal</a>
+      <a href="#depenses"      class="menu-link" data-page="depenses">💸 Dépenses</a>
+      <a href="#agents"        class="menu-link" data-page="agents">👥 Agents apporteurs</a>
+      <a href="#utilisateurs"  class="menu-link" data-page="utilisateurs">🔐 Gestion utilisateurs</a>
+      <a href="#profil"        class="menu-link" data-page="profil">👤 Mon profil</a>
+      <a href="#parametres"    class="menu-link" data-page="parametres">⚙️ Paramètres</a>
+    </nav>
+  </aside>
+
+  <main class="app-main" id="app-main">
+    <div id="page-container"></div>
+  </main>
+
+  <footer class="app-footer">
+    <div class="footer-l1">
+      💰 <strong>TransLedger</strong> v2.0 • <strong>ATIZOUN DIGICOM</strong>
+    </div>
+    <div class="footer-l2">Conçu par <strong>Atizoun Plateny AMOUSSOU</strong></div>
+    <div class="footer-l2">
+      <a href="mailto:atizoun@gmail.com">✉️ atizoun@gmail.com</a>
+      <span class="sep">•</span>
+      <a href="tel:+2290197744035">📞 01 97 74 40 35</a>
+    </div>
+  </footer>
+
+  <div id="modal-root"></div>
+  <div id="toast-root" class="toast-root"></div>
+
+
+</body>
+</html>
